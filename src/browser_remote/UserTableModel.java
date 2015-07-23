@@ -3,6 +3,7 @@ package browser_remote;
 import javax.swing.JButton;
 import javax.swing.table.AbstractTableModel;
 
+@SuppressWarnings("serial")
 public class UserTableModel extends AbstractTableModel {
 
 	private static final String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};

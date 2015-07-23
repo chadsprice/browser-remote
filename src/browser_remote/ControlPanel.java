@@ -11,6 +11,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 
 @SuppressWarnings("serial")
 public class ControlPanel extends JPanel implements ActionListener, WindowFocusListener {
@@ -70,13 +71,19 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		urlLabel = new JLabel();
 		updateUrlLabel();
 
-		/*String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};
+		String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};
 		Object[][] data = {
-				{"192.168.2.24", 1, "Snowboarding", new JButton("Kick"), new JButton("Ban")},
-				{"192.168.2.24", 2, "Rowing", new JButton("Kick"), new JButton("Ban")}
+				{"192.168.2.24", 1, false, new JButton("Kick"), new JButton("Ban")},
+				{"192.168.2.24", 2, false, new JButton("Kick"), new JButton("Ban")}
 		};
-		userTable = new JTable(data, columnNames);*/
-		userTable = new JTable(new UserTableModel());
+		userTable = new JTable(data, columnNames);
+		AwtComponentCellEditor cellEditor = new AwtComponentCellEditor();
+		TableColumn kickColumn = userTable.getColumnModel().getColumn(3);
+		kickColumn.setCellRenderer(cellEditor);
+		kickColumn.setCellEditor(cellEditor);
+		TableColumn banColumn = userTable.getColumnModel().getColumn(4);
+		banColumn.setCellRenderer(cellEditor);
+		banColumn.setCellEditor(cellEditor);
 
 		userScrollPane = new JScrollPane(userTable);
 		int userScrollPaneWidth = userScrollPane.getPreferredSize().width;
