@@ -9,10 +9,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Enumeration;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
+
+import org.java_websocket.WebSocket;
 
 @SuppressWarnings("serial")
 public class ControlPanel extends JPanel implements ActionListener, WindowFocusListener {
@@ -23,13 +25,16 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private String urlAddress;
 	private int httpPort = DEFAULT_HTTP_PORT;
 	private int websocketPort = DEFAULT_WEBSOCKET_PORT;
-	
+
+	private RemoteServer remoteServer;
 	private HttpServer httpServer;
-	
+
+	private ControllerLayout controllerLayout;
 	private boolean serverRunning;
 	private boolean windowFocused;
 
 	private int usersConnected;
+	private Set<User> users;
 
 	private JComboBox controllerComboBox;
 	private JButton controllerConfigureButton;
@@ -42,6 +47,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private JScrollPane userScrollPane;
 
 	public ControlPanel() {
+		controllerLayout = new ZsnesControllerLayout();
+		users = new HashSet<User>();
+		
 		// find url address
 		try {
 			urlAddress = null;
@@ -64,7 +72,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox(new String[] {"ZSNES", "MAME"});
+		controllerComboBox = new JComboBox(new ControllerLayout[] {controllerLayout});
 
 		controllerConfigureButton = new JButton("Configure");
 		controllerConfigureButton.addActionListener(this);
@@ -133,13 +141,18 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		constraints.gridy = 3;
 		constraints.gridwidth = 3;
 		add(urlLabel, constraints);
-		
+
 		constraints.insets = new Insets(0, 5, 5, 5);
 		constraints.gridy = 4;
 		constraints.gridwidth = 3;
 		add(usersConnectedLabel, constraints);
 	}
-	
+
+	public void startRemoteServer() {
+		remoteServer = new RemoteServer(websocketPort, this);
+		remoteServer.start();
+	}
+
 	public void startHttpServer() {
 		try {
 			httpServer = new HttpServer(httpPort);
@@ -228,12 +241,6 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		if (usersConnected == 0) {
 			showUserTable();
 		}
-		/*
-		Object[][] data = {
-				{"192.168.2.24", 1, false, new JButton("Kick"), new JButton("Ban")},
-				{"192.168.2.24", 2, false, new JButton("Kick"), new JButton("Ban")}
-		};
-		 */
 		int numberOfControllers = 4;
 		Integer[] controllerNumbers = new Integer[numberOfControllers];
 		for (int i = 0; i < numberOfControllers; i++) {
@@ -246,6 +253,34 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		updateUsersConnectedLabel();
 	}
 
+	public void remoteOpened(WebSocket conn) {
+		// check if it is a user that is already connected
+		String ip = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+		for (User user : users) {
+			if (user.ip.equals(ip)) {
+				user.conn = conn;
+				return;
+			}
+		}
+		User user = new User(conn, 1, controllerLayout);
+		users.add(user);
+	}
+
+	public void remoteClosed(WebSocket conn) {
+		Iterator<User> iter = users.iterator();
+		while (iter.hasNext()) {
+			User user = iter.next();
+			if (user.conn == conn) {
+				iter.remove();
+				break;
+			}
+		}
+	}
+	
+	public void remoteButton(WebSocket conn, String button, boolean pressed) {
+		
+	}
+
 	public static void main(String[] args) {
 		ControlPanel controlPanel = new ControlPanel();
 		JFrame frame = new JFrame("Browser Remote");
@@ -254,19 +289,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		frame.pack();
 		frame.addWindowFocusListener(controlPanel);
 		frame.setVisible(true);
-		
+
+		controlPanel.startRemoteServer();
 		controlPanel.startHttpServer();
-
-		for (int n = 0; n < 5; n++) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			controlPanel.addUser();
-		}
 	}
 
 }

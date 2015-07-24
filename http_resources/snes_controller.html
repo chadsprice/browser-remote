@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		<meta charset="utf-8">
+		<meta http-equiv='content-type' content='text/html; charset=UTF-8'>
+		<meta charset='utf-8'>
 
 		<title>Browser SNES Controller</title>
 
@@ -20,8 +20,9 @@
 	<body>
 		<object id='controller' type='image/svg+xml' data='svg_snes_controller.svg'></object>
 
-		<script type="text/javascript">
+		<script type='text/javascript'>
 
+		/* resize the controller image when the window is resized */
 		function resizeController(event) {
 			var controller = document.getElementById('controller');
 			controller.removeAttribute('height');
@@ -33,6 +34,56 @@
 		}
 		resizeController();
 		window.addEventListener('resize', resizeController);
+
+		/* list of all button names */
+		var buttons = ['up', 'down', 'left', 'right', 'start', 'select', 'a', 'b', 'x', 'y', 'l', 'r'];
+
+		/* map from button name to boolean indicating whether or not it is pressed */
+		var isPressed = {};
+		for (var i = 0; i < buttons.length; i++) {
+			isPressed[buttons[i]] = false;
+		}
+
+		/* map from key code to button name */
+		var keyBindings = {
+			38 : 'up',
+			40 : 'down',
+			37 : 'left',
+			39 : 'right',
+			13 : 'start',
+			16 : 'select',
+			88 : 'a',
+			90 : 'b',
+			83 : 'x',
+			65 : 'y',
+			68 : 'l',
+			67 : 'r'
+		};
+
+		/* connect to server websocket */
+		var host = location.host;
+		if (host === '') {
+			host = 'localhost';
+		}
+		host = host.split(':')[0];
+		var socket = new WebSocket('ws://' + host + ':8081');
+
+		/* handle keyboard input */
+		document.onkeydown = function (event) {
+			var button = keyBindings[event.keyCode];
+			if (!isPressed[button]) {
+				isPressed[button] = true;
+				socket.send(button + ' down');
+			}
+		}
+
+		document.onkeyup = function (event) {
+			var button = keyBindings[event.keyCode];
+			if (isPressed[button]) {
+				isPressed[button] = false;
+				socket.send(button + ' up');
+			}
+		}
 
 		</script>
 	</body>
