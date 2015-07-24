@@ -1,6 +1,7 @@
 package browser_remote;
 
-import javax.swing.JButton;
+import java.util.*;
+
 import javax.swing.table.AbstractTableModel;
 
 @SuppressWarnings("serial")
@@ -8,7 +9,13 @@ public class UserTableModel extends AbstractTableModel {
 
 	private static final String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};
 
-	private Object[] data = {"192.168.2.24", 1, false, new JButton("Kick"), new JButton("Ban")};
+	private List<Object[]> data;
+	//private Object[] data = {"192.168.2.24", 1, false, new JButton("Kick"), new JButton("Ban")};
+
+	public UserTableModel() {
+		super();
+		data = new ArrayList<Object[]>();
+	}
 
 	@Override
 	public int getColumnCount() {
@@ -17,17 +24,23 @@ public class UserTableModel extends AbstractTableModel {
 
 	@Override
 	public int getRowCount() {
-		return 4;
+		return data.size();
 	}
 
 	@Override
-	public String getColumnName(int col) {
-		return columnNames[col];
+	public String getColumnName(int column) {
+		return columnNames[column];
 	}
 
 	@Override
-	public Object getValueAt(int row, int col) {
-		return data[col];
+	public Object getValueAt(int row, int column) {
+		return data.get(row)[column];
+	}
+
+	@Override
+	public void setValueAt(Object value, int row, int col) {
+		data.get(row)[col] = value;
+		fireTableCellUpdated(row, col);
 	}
 
 	public Class getColumnClass(int c) {
@@ -35,8 +48,16 @@ public class UserTableModel extends AbstractTableModel {
 	}
 
 	@Override
-	public boolean isCellEditable(int row, int col) {
-		return false;
+	public boolean isCellEditable(int row, int column) {
+		if (column == 0) {
+			return false;
+		}
+		return true;
+	}
+
+	public void addRow(Object[] row) {
+		data.add(row);
+		fireTableDataChanged();
 	}
 
 }
