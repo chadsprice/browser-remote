@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<meta charset="utf-8">
+
+		<title>Browser SNES Controller</title>
+
+		<style>
+			body {
+				margin: 0;
+				text-align: center;
+			}
+			object {
+				margin: auto;
+			}
+		</style>
+	</head>
+
+	<body>
+		<object id='controller' type='image/svg+xml' data='svg_snes_controller.svg'></object>
+
+		<script type="text/javascript">
+
+		function resizeController(event) {
+			var controller = document.getElementById('controller');
+			controller.removeAttribute('height');
+			document.getElementById('controller').setAttribute('width', '80%');
+			if (controller.offsetHeight > window.innerHeight) {
+				controller.removeAttribute('width');
+				controller.setAttribute('height', window.innerHeight + 'px');
+			}
+		}
+		resizeController();
+		window.addEventListener('resize', resizeController);
+
+		</script>
+	</body>
+</html>

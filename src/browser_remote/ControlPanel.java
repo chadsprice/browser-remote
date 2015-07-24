@@ -5,6 +5,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.*;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -22,7 +23,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private String urlAddress;
 	private int httpPort = DEFAULT_HTTP_PORT;
 	private int websocketPort = DEFAULT_WEBSOCKET_PORT;
-
+	
+	private HttpServer httpServer;
+	
 	private boolean serverRunning;
 	private boolean windowFocused;
 
@@ -136,6 +139,14 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		constraints.gridwidth = 3;
 		add(usersConnectedLabel, constraints);
 	}
+	
+	public void startHttpServer() {
+		try {
+			httpServer = new HttpServer(httpPort);
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Failed to start HTTP server.", "HTTP Server Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent action) {
@@ -243,6 +254,8 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		frame.pack();
 		frame.addWindowFocusListener(controlPanel);
 		frame.setVisible(true);
+		
+		controlPanel.startHttpServer();
 
 		for (int n = 0; n < 5; n++) {
 			try {
