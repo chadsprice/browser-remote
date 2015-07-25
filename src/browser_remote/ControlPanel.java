@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 
 import org.java_websocket.WebSocket;
+import org.java_websocket.framing.CloseFrame;
 
 @SuppressWarnings("serial")
 public class ControlPanel extends JPanel implements ActionListener, WindowFocusListener {
@@ -82,7 +83,16 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout});
+		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout, new MameControllerLayout()});
+		controllerComboBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				for (User user : users) {
+					releaseAllButtons(user);
+				}
+				controllerLayout = (ControllerLayout) controllerComboBox.getSelectedItem();
+			}
+		});
 
 		controllerConfigureButton = new JButton("Configure");
 		controllerConfigureButton.addActionListener(this);
@@ -160,7 +170,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	}
 
 	public boolean isRunning() {
-		return serverRunning;
+		return serverRunning && !windowFocused;
 	}
 
 	public void startRemoteServer() {
@@ -195,6 +205,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	public void windowGainedFocus(WindowEvent arg0) {
 		windowFocused = true;
 		updateServerStateLabel();
+		for (User user : users) {
+			releaseAllButtons(user);
+		}
 	}
 
 	private void handleControllerConfigureButtonPress() {
@@ -259,13 +272,13 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		String ip = conn.getRemoteSocketAddress().getAddress().getHostAddress();
 		// check if it is a user that has been banned
 		if (banned.contains(ip)) {
-			conn.close(0);
+			conn.close(CloseFrame.NORMAL);
 			return;
 		}
 		// check if it is a user that is already connected
 		for (User user : users) {
 			if (user.ip.equals(ip)) {
-				user.conn.close(0);
+				user.conn.close(CloseFrame.NORMAL);
 				user.conn = conn;
 				return;
 			}

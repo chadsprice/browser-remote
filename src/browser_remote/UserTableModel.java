@@ -10,7 +10,6 @@ public class UserTableModel extends AbstractTableModel {
 	private static final String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};
 
 	private List<Object[]> data;
-	//private Object[] data = {"192.168.2.24", 1, false, new JButton("Kick"), new JButton("Ban")};
 
 	public UserTableModel() {
 		super();
@@ -43,6 +42,7 @@ public class UserTableModel extends AbstractTableModel {
 		fireTableCellUpdated(row, col);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Class getColumnClass(int c) {
 		return getValueAt(0, c).getClass();
 	}
