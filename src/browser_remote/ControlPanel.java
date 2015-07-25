@@ -28,9 +28,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private int websocketPort = DEFAULT_WEBSOCKET_PORT;
 
 	private KeyPresser keyPresser;
-	
+
 	private RemoteServer remoteServer;
-	//private HttpServer httpServer;
+	private Set<String> banned;
 
 	private ControllerLayout controllerLayout;
 	private boolean serverRunning;
@@ -56,7 +56,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 			e1.printStackTrace();
 			System.exit(-1);
 		}
-		
+		banned = new HashSet<String>();
 		controllerLayout = new ZsnesControllerLayout();
 		users = new HashSet<User>();
 
@@ -91,13 +91,10 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		startButton.addActionListener(this);
 
 		serverStateLabel = new JLabel();
-		updateServerStateLabel();
 
 		urlLabel = new JLabel();
-		updateUrlLabel();
 
 		usersConnectedLabel = new JLabel();
-		updateUsersConnectedLabel();
 
 		userTable = new JTable();
 		userTableModel = new UserTableModel();
@@ -121,6 +118,10 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		userScrollPane = new JScrollPane(userTable);
 		int userScrollPaneWidth = userScrollPane.getPreferredSize().width;
 		userScrollPane.setPreferredSize(new Dimension(userScrollPaneWidth, userTable.getRowHeight() * 10));
+
+		updateServerStateLabel();
+		updateUrlLabel();
+		updateUsersConnectedLabel();
 
 		// set layout to grid bag
 		setLayout(new GridBagLayout());
@@ -156,6 +157,10 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		constraints.gridy = 4;
 		constraints.gridwidth = 3;
 		add(usersConnectedLabel, constraints);
+	}
+
+	public boolean isRunning() {
+		return serverRunning;
 	}
 
 	public void startRemoteServer() {
@@ -250,27 +255,17 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		userTableShown = true;
 	}
 
-	/*
-	public void addUser() {
-		if (userTableModel == 0) {
-			showUserTable();
-		}
-		int numberOfControllers = 4;
-		Integer[] controllerNumbers = new Integer[numberOfControllers];
-		for (int i = 0; i < numberOfControllers; i++) {
-			controllerNumbers[i] = i + 1;
-		}
-		JComboBox controllerNumberBox = new JComboBox<Integer>(controllerNumbers);
-		userTableModel.addRow(new Object[] {"192.168.2.24", controllerNumberBox, false, new JButton("Kick"), new JButton("Ban")});
-		updateUsersConnectedLabel();
-	}
-	 */
-
 	public void remoteOpened(WebSocket conn) {
-		// check if it is a user that is already connected
 		String ip = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+		// check if it is a user that has been banned
+		if (banned.contains(ip)) {
+			conn.close(0);
+			return;
+		}
+		// check if it is a user that is already connected
 		for (User user : users) {
 			if (user.ip.equals(ip)) {
+				user.conn.close(0);
 				user.conn = conn;
 				return;
 			}
@@ -290,6 +285,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		controllerNumberBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				releaseAllButtons(user);
 				user.controllerNumber = (Integer) controllerNumberBox.getSelectedItem();
 			}
 		});
@@ -305,7 +301,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				removeUser(user);
-				// TODO add user's ip to blacklist
+				banned.add(user.ip);
 			}
 		});
 		userTableModel.addRow(new Object[] {ip, controllerNumberBox, false, kick, ban});
@@ -319,16 +315,24 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 				break;
 			}
 		}
-		// TODO
-		Iterator<User> iter = users.iterator();
-		while (iter.hasNext()) {
-			User user = iter.next();
+	}
+
+	public void remoteButton(WebSocket conn, String button, boolean pressed) {
+		for (User user : users) {
 			if (user.conn == conn) {
-				iter.remove();
-				for (int i = 0; i < userTableModel.getRowCount(); i++) {
-					if (user.ip.equals((String) userTableModel.getValueAt(0, i))) {
-						userTableModel.removeRow(i);
-						break;
+				int key = controllerLayout.getKey(button, user.controllerNumber);
+				if (key == -1) {
+					break;
+				}
+				if (pressed) {
+					if (!user.isPressed.get(button)) {
+						keyPresser.addPress(key);
+						user.isPressed.put(button, true);
+					}
+				} else {
+					if (user.isPressed.get(button)) {
+						keyPresser.removePress(key);
+						user.isPressed.put(button, false);
 					}
 				}
 				break;
@@ -336,14 +340,6 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 	}
 
-	public void remoteButton(WebSocket conn, String button, boolean pressed) {
-		for (User user : users) {
-			if (user.conn == conn) {
-				break;
-			}
-		}
-	}
-	
 	private void removeUser(User user) {
 		releaseAllButtons(user);
 		users.remove(user);
@@ -354,7 +350,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 			}
 		}
 	}
-	
+
 	private void releaseAllButtons(User user) {
 		for (Map.Entry<String, Boolean> entry : user.isPressed.entrySet()) {
 			if (entry.getValue()) {

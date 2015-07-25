@@ -31,12 +31,15 @@ public class RemoteServer extends WebSocketServer {
 
 	@Override
 	public void onMessage(WebSocket conn, String message) {
+		if (!controlPanel.isRunning()) {
+			return;
+		}
 		String[] tokens = message.split(" ");
 		if (tokens.length != 2)
 			return;
 		if (tokens[1].equals("down") || tokens[1].equals("up")) {
 			synchronized (controlPanel) {
-				controlPanel.remoteButton(conn, tokens[0], tokens[1].equals("pressed"));
+				controlPanel.remoteButton(conn, tokens[0], tokens[1].equals("down"));
 			}
 		}
 	}

@@ -71,17 +71,21 @@
 		/* handle keyboard input */
 		document.onkeydown = function (event) {
 			var button = keyBindings[event.keyCode];
-			if (!isPressed[button]) {
-				isPressed[button] = true;
-				socket.send(button + ' down');
+			if (button) {
+				if (!isPressed[button]) {
+					isPressed[button] = true;
+					socket.send(button + ' down');
+				}
 			}
 		}
 
 		document.onkeyup = function (event) {
 			var button = keyBindings[event.keyCode];
-			if (isPressed[button]) {
-				isPressed[button] = false;
-				socket.send(button + ' up');
+			if (button) {
+				if (isPressed[button]) {
+					isPressed[button] = false;
+					socket.send(button + ' up');
+				}
 			}
 		}
 
