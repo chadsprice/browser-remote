@@ -1,5 +1,6 @@
 package browser_remote;
 
+import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -26,17 +27,19 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private int httpPort = DEFAULT_HTTP_PORT;
 	private int websocketPort = DEFAULT_WEBSOCKET_PORT;
 
+	private KeyPresser keyPresser;
+	
 	private RemoteServer remoteServer;
-	private HttpServer httpServer;
+	//private HttpServer httpServer;
 
 	private ControllerLayout controllerLayout;
 	private boolean serverRunning;
 	private boolean windowFocused;
 
-	private int usersConnected;
 	private Set<User> users;
+	private boolean userTableShown;
 
-	private JComboBox controllerComboBox;
+	private JComboBox<ControllerLayout> controllerComboBox;
 	private JButton controllerConfigureButton;
 	private JButton startButton;
 	private JLabel serverStateLabel;
@@ -47,9 +50,16 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private JScrollPane userScrollPane;
 
 	public ControlPanel() {
+		try {
+			keyPresser = new KeyPresser();
+		} catch (AWTException e1) {
+			e1.printStackTrace();
+			System.exit(-1);
+		}
+		
 		controllerLayout = new ZsnesControllerLayout();
 		users = new HashSet<User>();
-		
+
 		// find url address
 		try {
 			urlAddress = null;
@@ -72,7 +82,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox(new ControllerLayout[] {controllerLayout});
+		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout});
 
 		controllerConfigureButton = new JButton("Configure");
 		controllerConfigureButton.addActionListener(this);
@@ -155,7 +165,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 
 	public void startHttpServer() {
 		try {
-			httpServer = new HttpServer(httpPort);
+			new HttpServer(httpPort);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Failed to start HTTP server.", "HTTP Server Error", JOptionPane.ERROR_MESSAGE);
 		}
@@ -217,6 +227,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	}
 
 	private void updateUsersConnectedLabel() {
+		int usersConnected = userTableModel.getRowCount();
 		if (usersConnected == 0) {
 			usersConnectedLabel.setText("0 users connected");
 		} else if (usersConnected == 1) {
@@ -235,10 +246,13 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		add(userScrollPane, constraints);
 
 		((JFrame) getTopLevelAncestor()).pack();
+
+		userTableShown = true;
 	}
 
+	/*
 	public void addUser() {
-		if (usersConnected == 0) {
+		if (userTableModel == 0) {
 			showUserTable();
 		}
 		int numberOfControllers = 4;
@@ -248,10 +262,9 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 		JComboBox controllerNumberBox = new JComboBox<Integer>(controllerNumbers);
 		userTableModel.addRow(new Object[] {"192.168.2.24", controllerNumberBox, false, new JButton("Kick"), new JButton("Ban")});
-
-		usersConnected++;
 		updateUsersConnectedLabel();
 	}
+	 */
 
 	public void remoteOpened(WebSocket conn) {
 		// check if it is a user that is already connected
@@ -262,23 +275,94 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 				return;
 			}
 		}
-		User user = new User(conn, 1, controllerLayout);
+		final User user = new User(conn, 1, controllerLayout);
 		users.add(user);
+		// add user to table
+		if (!userTableShown) {
+			showUserTable();
+		}
+		int numberOfControllers = controllerLayout.getNumberOfControllers();
+		Integer[] controllerNumbers = new Integer[numberOfControllers];
+		for (int i = 0; i < numberOfControllers; i++) {
+			controllerNumbers[i] = i + 1;
+		}
+		final JComboBox<Integer> controllerNumberBox = new JComboBox<Integer>(controllerNumbers);
+		controllerNumberBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				user.controllerNumber = (Integer) controllerNumberBox.getSelectedItem();
+			}
+		});
+		final JButton kick = new JButton("Kick");
+		kick.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				removeUser(user);
+			}
+		});
+		final JButton ban = new JButton("Ban");
+		ban.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				removeUser(user);
+				// TODO add user's ip to blacklist
+			}
+		});
+		userTableModel.addRow(new Object[] {ip, controllerNumberBox, false, kick, ban});
+		updateUsersConnectedLabel();
 	}
 
 	public void remoteClosed(WebSocket conn) {
+		for (User user : users) {
+			if (user.conn == conn) {
+				removeUser(user);
+				break;
+			}
+		}
+		// TODO
 		Iterator<User> iter = users.iterator();
 		while (iter.hasNext()) {
 			User user = iter.next();
 			if (user.conn == conn) {
 				iter.remove();
+				for (int i = 0; i < userTableModel.getRowCount(); i++) {
+					if (user.ip.equals((String) userTableModel.getValueAt(0, i))) {
+						userTableModel.removeRow(i);
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	public void remoteButton(WebSocket conn, String button, boolean pressed) {
+		for (User user : users) {
+			if (user.conn == conn) {
 				break;
 			}
 		}
 	}
 	
-	public void remoteButton(WebSocket conn, String button, boolean pressed) {
-		
+	private void removeUser(User user) {
+		releaseAllButtons(user);
+		users.remove(user);
+		for (int i = 0; i < userTableModel.getRowCount(); i++) {
+			if (user.ip.equals((String) userTableModel.getValueAt(0, i))) {
+				userTableModel.removeRow(i);
+				break;
+			}
+		}
+	}
+	
+	private void releaseAllButtons(User user) {
+		for (Map.Entry<String, Boolean> entry : user.isPressed.entrySet()) {
+			if (entry.getValue()) {
+				int key = controllerLayout.getKey(entry.getKey(), user.controllerNumber);
+				keyPresser.removePress(key);
+				entry.setValue(false);
+			}
+		}
 	}
 
 	public static void main(String[] args) {

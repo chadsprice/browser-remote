@@ -59,5 +59,10 @@ public class UserTableModel extends AbstractTableModel {
 		data.add(row);
 		fireTableDataChanged();
 	}
+	
+	public void removeRow(int row) {
+		data.remove(row);
+		fireTableDataChanged();
+	}
 
 }
