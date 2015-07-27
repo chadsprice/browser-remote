@@ -17,7 +17,7 @@
 			}
 			#up_button {
 				position: absolute;
-				background-color: red;
+				background-color: rgba(255, 0, 0, 0.5);
 			}
 		</style>
 	</head>
@@ -39,16 +39,16 @@
 				controller.setAttribute('height', window.innerHeight + 'px');
 			}
 			var controllerWidth = controller.offsetWidth;
-			var controllerLeft = (window.innerWidth - controllerWidth) / 2;
+			var controllerLeft = (document.body.clientWidth - controllerWidth) / 2;
 			/* resize buttons */
 			var up_button = document.getElementById('up_button');
 			up_button.style.width = (controller.offsetWidth * 0.07) + 'px';
 			up_button.style.height = (controller.offsetWidth * 0.07) + 'px';
-			up_button.style.top = 0 + 'px';
-			up_button.style.left = controllerLeft + 'px';
+			up_button.style.top = (controller.offsetWidth * 0.20) + 'px';
+			up_button.style.left = controllerLeft + (controller.offsetWidth * 0.17) + 'px';
 		}
-		/* set the initial controller size */
-		resizeController();
+		/* set the initial controller size when the page loads */
+		window.onload = resizeController;
 		/* window resize trigger */
 		window.addEventListener('resize', resizeController);
 
