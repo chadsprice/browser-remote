@@ -8,31 +8,48 @@
 
 		<style>
 			body {
+				position: relative;
 				margin: 0;
 				text-align: center;
 			}
-			object {
+			#controller {
 				margin: auto;
+			}
+			#up_button {
+				position: absolute;
+				background-color: red;
 			}
 		</style>
 	</head>
 
 	<body>
-		<object id='controller' type='image/svg+xml' data='svg_snes_controller.svg'></object>
+		<img id='controller' src='svg_snes_controller.svg' />
+		<div id='up_button'></div>
 
 		<script type='text/javascript'>
 
-		/* resize the controller image when the window is resized */
+		/* resize the controller when the window is resized */
 		function resizeController(event) {
+			/* resize controller image */
 			var controller = document.getElementById('controller');
 			controller.removeAttribute('height');
-			document.getElementById('controller').setAttribute('width', '80%');
+			controller.setAttribute('width', '80%');
 			if (controller.offsetHeight > window.innerHeight) {
 				controller.removeAttribute('width');
 				controller.setAttribute('height', window.innerHeight + 'px');
 			}
+			var controllerWidth = controller.offsetWidth;
+			var controllerLeft = (window.innerWidth - controllerWidth) / 2;
+			/* resize buttons */
+			var up_button = document.getElementById('up_button');
+			up_button.style.width = (controller.offsetWidth * 0.07) + 'px';
+			up_button.style.height = (controller.offsetWidth * 0.07) + 'px';
+			up_button.style.top = 0 + 'px';
+			up_button.style.left = controllerLeft + 'px';
 		}
+		/* set the initial controller size */
 		resizeController();
+		/* window resize trigger */
 		window.addEventListener('resize', resizeController);
 
 		/* list of all button names */
@@ -88,6 +105,15 @@
 				}
 			}
 		}
+
+		/* prevent clicking from selecting the controller as an image */
+		document.getElementById("controller").onclick = function (event) {
+    	event.preventDefault();
+		};
+		/* prevent dragging from dragging the controller as an image */
+		document.getElementById("controller").ondragstart = function (event) {
+    	event.preventDefault();
+		};
 
 		</script>
 	</body>
