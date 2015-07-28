@@ -15,18 +15,44 @@
 			#controller {
 				margin: auto;
 			}
-			#up_button {
+			.button {
 				position: absolute;
-				background-color: rgba(255, 0, 0, 0.5);
+				background-color: rgba(0, 0, 0, 0.2);
 			}
 		</style>
 	</head>
 
 	<body>
 		<img id='controller' src='svg_snes_controller.svg' />
-		<div id='up_button'></div>
+		<div class='button' name='up'></div>
+		<div class='button' name='down'></div>
+		<div class='button' name='left'></div>
+		<div class='button' name='right'></div>
+		<div class='button' name='start'></div>
+		<div class='button' name='select'></div>
+		<div class='button' name='a'></div>
+		<div class='button' name='b'></div>
+		<div class='button' name='x'></div>
+		<div class='button' name='y'></div>
+		<div class='button' name='l'></div>
+		<div class='button' name='r'></div>
 
 		<script type='text/javascript'>
+
+		/* button width, height, left, and top as a ratio of controller width */
+		var buttonPositions = {};
+		buttonPositions['up'] = [0.07, 0.07, 0.17, 0.20];
+		buttonPositions['down'] = [0.07, 0.07, 0.17, 0.34];
+		buttonPositions['left'] = [0.07, 0.07, 0.10, 0.27];
+		buttonPositions['right'] = [0.07, 0.07, 0.24, 0.27];
+		buttonPositions['start'] = [0.095, 0.08, 0.463, 0.293];
+		buttonPositions['select'] = [0.095, 0.08, 0.36, 0.293];
+		buttonPositions['a'] = [0.1, 0.1, 0.805, 0.255];
+		buttonPositions['b'] = [0.1, 0.1, 0.705, 0.325];
+		buttonPositions['x'] = [0.1, 0.1, 0.70, 0.175];
+		buttonPositions['y'] = [0.1, 0.1, 0.60, 0.245];
+		buttonPositions['l'] = [0.24, 0.06, 0.09, 0.06];
+		buttonPositions['r'] = [0.24, 0.06, 0.62, 0.06];
 
 		/* resize the controller when the window is resized */
 		function resizeController(event) {
@@ -41,11 +67,15 @@
 			var controllerWidth = controller.offsetWidth;
 			var controllerLeft = (document.body.clientWidth - controllerWidth) / 2;
 			/* resize buttons */
-			var up_button = document.getElementById('up_button');
-			up_button.style.width = (controller.offsetWidth * 0.07) + 'px';
-			up_button.style.height = (controller.offsetWidth * 0.07) + 'px';
-			up_button.style.top = (controller.offsetWidth * 0.20) + 'px';
-			up_button.style.left = controllerLeft + (controller.offsetWidth * 0.17) + 'px';
+			var buttonDivs = document.getElementsByClassName('button');
+			for (var i = 0; i < buttonDivs.length; i++) {
+				var buttonDiv = buttonDivs[i];
+				var buttonPosition = buttonPositions[buttonDiv.getAttribute('name')];
+				buttonDiv.style.width = (controller.offsetWidth * buttonPosition[0]) + 'px';
+				buttonDiv.style.height = (controller.offsetWidth * buttonPosition[1]) + 'px';
+				buttonDiv.style.left = controllerLeft + (controller.offsetWidth * buttonPosition[2]) + 'px';
+				buttonDiv.style.top = (controller.offsetWidth * buttonPosition[3]) + 'px';
+			}
 		}
 		/* set the initial controller size when the page loads */
 		window.onload = resizeController;
