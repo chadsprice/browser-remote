@@ -17,25 +17,30 @@
 			}
 			.button {
 				position: absolute;
+			}
+			.button:hover {
 				background-color: rgba(0, 0, 0, 0.2);
+			}
+			.pressed {
+				outline: yellow solid 5px;
 			}
 		</style>
 	</head>
 
 	<body>
 		<img id='controller' src='svg_snes_controller.svg' />
-		<div class='button' name='up'></div>
-		<div class='button' name='down'></div>
-		<div class='button' name='left'></div>
-		<div class='button' name='right'></div>
-		<div class='button' name='start'></div>
-		<div class='button' name='select'></div>
-		<div class='button' name='a'></div>
-		<div class='button' name='b'></div>
-		<div class='button' name='x'></div>
-		<div class='button' name='y'></div>
-		<div class='button' name='l'></div>
-		<div class='button' name='r'></div>
+		<div class='button' name='up' id='up_button'></div>
+		<div class='button' name='down' id='down_button'></div>
+		<div class='button' name='left' id='left_button'></div>
+		<div class='button' name='right' id='right_button'></div>
+		<div class='button' name='start' id='start_button'></div>
+		<div class='button' name='select' id='select_button'></div>
+		<div class='button' name='a' id='a_button'></div>
+		<div class='button' name='b' id='b_button'></div>
+		<div class='button' name='x' id='x_button'></div>
+		<div class='button' name='y' id='y_button'></div>
+		<div class='button' name='l' id='l_button'></div>
+		<div class='button' name='r' id='r_button'></div>
 
 		<script type='text/javascript'>
 
@@ -116,32 +121,63 @@
 		var socket = new WebSocket('ws://' + host + ':8081');
 
 		/* handle keyboard input */
-		document.onkeydown = function (event) {
+		document.onkeydown = function(event) {
 			var button = keyBindings[event.keyCode];
 			if (button) {
 				if (!isPressed[button]) {
 					isPressed[button] = true;
 					socket.send(button + ' down');
+					document.getElementById(button + '_button').className = 'button pressed';
 				}
 			}
 		}
 
-		document.onkeyup = function (event) {
+		document.onkeyup = function(event) {
 			var button = keyBindings[event.keyCode];
 			if (button) {
 				if (isPressed[button]) {
 					isPressed[button] = false;
 					socket.send(button + ' up');
+					document.getElementById(button + '_button').className = 'button';
 				}
 			}
 		}
 
+		/* handle mouse and touch input */
+		Array.prototype.filter.call(document.getElementsByClassName('button'), function(buttonDiv) {
+			function handleStart(event) {
+				event.preventDefault();
+				var button = buttonDiv.getAttribute('name');
+				if (!isPressed[button]) {
+					isPressed[button] = true;
+					socket.send(button + ' down');
+					buttonDiv.className = 'button pressed';
+				}
+			}
+			function handleEnd(event) {
+				event.preventDefault();
+				var button = buttonDiv.getAttribute('name');
+				if (isPressed[button]) {
+					isPressed[button] = false;
+					socket.send(button + ' up');
+					buttonDiv.className = 'button';
+				}
+			}
+			buttonDiv.addEventListener('touchstart', handleStart, false);
+			buttonDiv.addEventListener('touchend', handleEnd, false);
+			buttonDiv.addEventListener('touchleave', handleEnd, false);
+			buttonDiv.addEventListener('touchcancel', handleEnd, false);
+			buttonDiv.onmousedown = handleStart;
+			buttonDiv.onmouseup = handleEnd;
+			buttonDiv.onmouseleave = handleEnd;
+		});
+
 		/* prevent clicking from selecting the controller as an image */
-		document.getElementById("controller").onclick = function (event) {
+		document.getElementById("controller").onclick = function(event) {
     	event.preventDefault();
 		};
 		/* prevent dragging from dragging the controller as an image */
-		document.getElementById("controller").ondragstart = function (event) {
+		document.getElementById("controller").ondragstart = function(event) {
     	event.preventDefault();
 		};
 
