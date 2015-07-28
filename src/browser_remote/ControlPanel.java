@@ -355,9 +355,10 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 
 	private void removeUser(User user) {
 		releaseAllButtons(user);
+		user.conn.close(CloseFrame.NORMAL);
 		users.remove(user);
 		for (int i = 0; i < userTableModel.getRowCount(); i++) {
-			if (user.ip.equals((String) userTableModel.getValueAt(0, i))) {
+			if (user.ip.equals((String) userTableModel.getValueAt(i, 0))) {
 				userTableModel.removeRow(i);
 				break;
 			}

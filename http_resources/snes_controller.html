@@ -11,6 +11,7 @@
 				position: relative;
 				margin: 0;
 				text-align: center;
+				font-family: Arial, Helvetica, sans-serif;
 			}
 			#controller {
 				margin: auto;
@@ -19,62 +20,78 @@
 				position: absolute;
 			}
 			.button:hover {
-				background-color: rgba(0, 0, 0, 0.2);
+				background-color: rgba(255, 255, 255, 0.3);
 			}
 			.pressed {
-				outline: #FFFF66 solid medium;
+				outline: #DDDDDD solid thick;
 			}
-			#config {
+			#status, #config {
 				position: absolute;
 				top: 0;
+				padding: 1em;
+			}
+			#status {
 				left: 0;
 			}
+			#status span {
+				color: red;
+			}
+			#config {
+				right: 0;
+			}
 			.config-text {
-				background-color: black;
-				color: white;
 				display: none;
+			}
+			#config, .config-text {
+				background-color: #CCCCCC;
+				outline: #888888 solid thick;
+			}
+			#config:hover {
+				background-color: #EEEEEE;
+				outline: #AAAAAA solid thick;
 			}
 		</style>
 	</head>
 
 	<body>
 		<img id='controller' src='svg_snes_controller.svg' />
-		<button id='config'>Configure Keys</button>
+		<div id='status'>STATUS: <span>DISCONNECTED</span></div>
+		<div id='config'>CONFIGURE KEYS</div>
 		<div class='button' name='up' id='up_button'>
-			<div class='config-text'>up</div>
+			<div class='config-text'>UP</div>
 		</div>
 		<div class='button' name='down' id='down_button'>
-			<div class='config-text'>down</div>
+			<div class='config-text'>DOWN</div>
 		</div>
 		<div class='button' name='left' id='left_button'>
-			<div class='config-text'>left</div>
+			<div class='config-text'>LEFT</div>
 		</div>
 		<div class='button' name='right' id='right_button'>
-			<div class='config-text'>right</div>
+			<div class='config-text'>RIGHT</div>
 		</div>
 		<div class='button' name='start' id='start_button'>
-			<div class='config-text'>enter</div>
+			<div class='config-text'>ENTER</div>
 		</div>
 		<div class='button' name='select' id='select_button'>
-			<div class='config-text'>shift</div>
+			<div class='config-text'>SHIFT</div>
 		</div>
 		<div class='button' name='a' id='a_button'>
-			<div class='config-text'>x</div>
+			<div class='config-text'>X</div>
 		</div>
 		<div class='button' name='b' id='b_button'>
-			<div class='config-text'>z</div>
+			<div class='config-text'>Z</div>
 		</div>
 		<div class='button' name='x' id='x_button'>
-			<div class='config-text'>s</div>
+			<div class='config-text'>S</div>
 		</div>
 		<div class='button' name='y' id='y_button'>
-			<div class='config-text'>a</div>
+			<div class='config-text'>A</div>
 		</div>
 		<div class='button' name='l' id='l_button'>
-			<div class='config-text'>d</div>
+			<div class='config-text'>D</div>
 		</div>
 		<div class='button' name='r' id='r_button'>
-			<div class='config-text'>c</div>
+			<div class='config-text'>C</div>
 		</div>
 
 		<script type='text/javascript'>
@@ -154,6 +171,12 @@
 		}
 		host = host.split(':')[0];
 		var socket = new WebSocket('ws://' + host + ':8081');
+		socket.onopen = function() {
+			document.getElementById("status").innerHTML = "STATUS: CONNECTED";
+		};
+		socket.onclose = function() {
+			document.getElementById("status").innerHTML = "STATUS: <span>DISCONNECTED</span>";
+		};
 
 		/* button configuration state */
 		var configuring = false;
@@ -187,7 +210,7 @@
 					} else if (keyName === 'ArrowRight') {
 						keyName = 'right';
 					}
-					buttonConfiguring.children[0].innerHTML = keyName;
+					buttonConfiguring.children[0].innerHTML = keyName.toUpperCase();
 					buttonConfiguring = null;
 					buttonConfiguringText = null;
 				}
@@ -224,7 +247,7 @@
 					}
 					buttonConfiguring = buttonDiv;
 					buttonConfiguringText = buttonDiv.children[0].innerHTML;
-					buttonDiv.children[0].innerHTML = '[press a key]';
+					buttonDiv.children[0].innerHTML = '[PRESS KEY]';
 				} else if (!isPressed[button]) {
 					isPressed[button] = true;
 					socket.send(button + ' down');
@@ -254,13 +277,13 @@
 		config.onclick = function(event) {
 			var display;
 			if (!configuring) {
-				config.innerHTML = 'Done';
+				config.innerHTML = 'DONE';
 				display = 'block';
 			} else {
 				if (buttonConfiguring && buttonConfiguringText) {
 					buttonConfiguring.children[0].innerHTML = buttonConfiguringText;
 				}
-				config.innerHTML = 'Configure Keys';
+				config.innerHTML = 'CONFIGURE KEYS';
 				display = 'none';
 			}
 			Array.prototype.filter.call(document.getElementsByClassName('config-text'), function (configText) {

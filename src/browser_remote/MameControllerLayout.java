@@ -41,8 +41,6 @@ public class MameControllerLayout implements ControllerLayout {
 		player2Map.put("b", KeyEvent.VK_S);
 		player2Map.put("x", KeyEvent.VK_Q);
 		player2Map.put("y", KeyEvent.VK_W);
-		player2Map.put("l", KeyEvent.VK_W);
-		player2Map.put("r", KeyEvent.VK_W);
 		buttonMaps = new ArrayList<Map<String, Integer>>();
 		buttonMaps.add(player1Map);
 		buttonMaps.add(player2Map);
