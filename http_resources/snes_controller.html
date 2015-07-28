@@ -24,23 +24,58 @@
 			.pressed {
 				outline: #FFFF66 solid medium;
 			}
+			#config {
+				position: absolute;
+				top: 0;
+				left: 0;
+			}
+			.config-text {
+				background-color: black;
+				color: white;
+				display: none;
+			}
 		</style>
 	</head>
 
 	<body>
 		<img id='controller' src='svg_snes_controller.svg' />
-		<div class='button' name='up' id='up_button'></div>
-		<div class='button' name='down' id='down_button'></div>
-		<div class='button' name='left' id='left_button'></div>
-		<div class='button' name='right' id='right_button'></div>
-		<div class='button' name='start' id='start_button'></div>
-		<div class='button' name='select' id='select_button'></div>
-		<div class='button' name='a' id='a_button'></div>
-		<div class='button' name='b' id='b_button'></div>
-		<div class='button' name='x' id='x_button'></div>
-		<div class='button' name='y' id='y_button'></div>
-		<div class='button' name='l' id='l_button'></div>
-		<div class='button' name='r' id='r_button'></div>
+		<button id='config'>Configure Keys</button>
+		<div class='button' name='up' id='up_button'>
+			<div class='config-text'>up</div>
+		</div>
+		<div class='button' name='down' id='down_button'>
+			<div class='config-text'>down</div>
+		</div>
+		<div class='button' name='left' id='left_button'>
+			<div class='config-text'>left</div>
+		</div>
+		<div class='button' name='right' id='right_button'>
+			<div class='config-text'>right</div>
+		</div>
+		<div class='button' name='start' id='start_button'>
+			<div class='config-text'>enter</div>
+		</div>
+		<div class='button' name='select' id='select_button'>
+			<div class='config-text'>shift</div>
+		</div>
+		<div class='button' name='a' id='a_button'>
+			<div class='config-text'>x</div>
+		</div>
+		<div class='button' name='b' id='b_button'>
+			<div class='config-text'>z</div>
+		</div>
+		<div class='button' name='x' id='x_button'>
+			<div class='config-text'>s</div>
+		</div>
+		<div class='button' name='y' id='y_button'>
+			<div class='config-text'>a</div>
+		</div>
+		<div class='button' name='l' id='l_button'>
+			<div class='config-text'>d</div>
+		</div>
+		<div class='button' name='r' id='r_button'>
+			<div class='config-text'>c</div>
+		</div>
 
 		<script type='text/javascript'>
 
@@ -120,18 +155,53 @@
 		host = host.split(':')[0];
 		var socket = new WebSocket('ws://' + host + ':8081');
 
+		/* button configuration state */
+		var configuring = false;
+		var buttonConfiguring = null;
+		var buttonConfiguringText = null;
+
 		/* handle keyboard input */
 		document.onkeydown = function(event) {
-			var button = keyBindings[event.keyCode];
-			if (button) {
-				if (!isPressed[button]) {
-					isPressed[button] = true;
-					socket.send(button + ' down');
-					document.getElementById(button + '_button').className = 'button pressed';
+			if (configuring) {
+				if (buttonConfiguring) {
+					var name = buttonConfiguring.getAttribute('name');
+					for (key in keyBindings) {
+						if (keyBindings.hasOwnProperty(key) && keyBindings[key] === name) {
+							delete keyBindings[key];
+							break;
+						}
+					}
+					if (keyBindings[event.keyCode]) {
+						document.getElementById(keyBindings[event.keyCode] + '_button').children[0].innerHTML = '';
+					}
+					keyBindings[event.keyCode] = name;
+					var keyName = event.key;
+					if (keyName === ' ') {
+						keyName = 'space';
+					} else if (keyName === 'ArrowUp') {
+						keyName = 'up';
+					} else if (keyName === 'ArrowDown') {
+						keyName = 'down';
+					} else if (keyName === 'ArrowLeft') {
+						keyName = 'left';
+					} else if (keyName === 'ArrowRight') {
+						keyName = 'right';
+					}
+					buttonConfiguring.children[0].innerHTML = keyName;
+					buttonConfiguring = null;
+					buttonConfiguringText = null;
+				}
+			} else {
+				var button = keyBindings[event.keyCode];
+				if (button) {
+					if (!isPressed[button]) {
+						isPressed[button] = true;
+						socket.send(button + ' down');
+						document.getElementById(button + '_button').className = 'button pressed';
+					}
 				}
 			}
 		}
-
 		document.onkeyup = function(event) {
 			var button = keyBindings[event.keyCode];
 			if (button) {
@@ -148,7 +218,14 @@
 			function handleStart(event) {
 				event.preventDefault();
 				var button = buttonDiv.getAttribute('name');
-				if (!isPressed[button]) {
+				if (configuring) {
+					if (buttonConfiguring && buttonConfiguringText) {
+						buttonConfiguring.children[0].innerHTML = buttonConfiguringText;
+					}
+					buttonConfiguring = buttonDiv;
+					buttonConfiguringText = buttonDiv.children[0].innerHTML;
+					buttonDiv.children[0].innerHTML = '[press a key]';
+				} else if (!isPressed[button]) {
 					isPressed[button] = true;
 					socket.send(button + ' down');
 					buttonDiv.className = 'button pressed';
@@ -171,6 +248,26 @@
 			buttonDiv.onmouseup = handleEnd;
 			buttonDiv.onmouseleave = handleEnd;
 		});
+
+		/* handle configure button */
+		var config = document.getElementById('config');
+		config.onclick = function(event) {
+			var display;
+			if (!configuring) {
+				config.innerHTML = 'Done';
+				display = 'block';
+			} else {
+				if (buttonConfiguring && buttonConfiguringText) {
+					buttonConfiguring.children[0].innerHTML = buttonConfiguringText;
+				}
+				config.innerHTML = 'Configure Keys';
+				display = 'none';
+			}
+			Array.prototype.filter.call(document.getElementsByClassName('config-text'), function (configText) {
+				configText.style.display = display;
+			});
+			configuring = !configuring;
+		};
 
 		/* prevent clicking from selecting the controller as an image */
 		document.getElementById("controller").onclick = function(event) {
