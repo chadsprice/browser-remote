@@ -49,6 +49,10 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	private JTable userTable;
 	private UserTableModel userTableModel;
 	private JScrollPane userScrollPane;
+	
+	private ConfigurableControllerLayout configurableControllerLayout;
+	private ConfigureControllerPanel configureControllerPanel;
+	private JFrame configureControllerFrame;
 
 	public ControlPanel() {
 		try {
@@ -149,8 +153,8 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		constraints.insets = new Insets(5, 5, 5, 5);
 		add(controllerConfigureButton, constraints);
 
-		constraints.insets = new Insets(0, 5, 5, 5);
 		constraints.gridy = 1;
+		constraints.insets = new Insets(0, 5, 5, 5);
 		add(startButton, constraints);
 
 		constraints.insets = new Insets(0, 5, 5, 5);
@@ -167,6 +171,14 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		constraints.gridy = 4;
 		constraints.gridwidth = 3;
 		add(usersConnectedLabel, constraints);
+		
+		// configure controller window
+		configurableControllerLayout = new ConfigurableControllerLayout();
+		
+		configureControllerPanel = new ConfigureControllerPanel(configurableControllerLayout);
+		configureControllerFrame = new JFrame("Configure Controller");
+		configureControllerFrame.add(configureControllerPanel);
+		configureControllerFrame.pack();
 	}
 
 	public boolean isRunning() {
@@ -212,6 +224,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 
 	private void handleControllerConfigureButtonPress() {
 		// TODO
+		configureControllerFrame.setVisible(true);
 	}
 
 	private void handleRunButtonPress() {
