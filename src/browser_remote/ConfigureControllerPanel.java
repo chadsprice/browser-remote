@@ -1,28 +1,34 @@
 package browser_remote;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 
 @SuppressWarnings("serial")
 public class ConfigureControllerPanel extends JPanel {
 
+	private ControlPanel controlPanel;
 	private ConfigurableControllerLayout controllerLayout;
 	private int controllerNumber;
 
 	private JComboBox<Integer> controllerNumberComboBox;
 	private JButton addControllerButton;
 	private JButton removeControllerButton;
-	private JScrollPane buttonScrollPane;
+	private JTable keyTable;
+	private KeyTableModel keyTableModel;
+	private JScrollPane keyScrollPane;
 	private JButton doneButton;
 	private JButton saveButton;
 	private JButton loadButton;
 
-	public ConfigureControllerPanel(ConfigurableControllerLayout controllerLayout) {
+	public ConfigureControllerPanel(ControlPanel controlPanel, ConfigurableControllerLayout controllerLayout) {
+		this.controlPanel = controlPanel;
 		this.controllerLayout = controllerLayout;
 
 		controllerNumberComboBox = new JComboBox<Integer>();
@@ -55,43 +61,71 @@ public class ConfigureControllerPanel extends JPanel {
 			}
 		});
 		
+		keyTable = new JTable();
+		keyTableModel = new KeyTableModel(this, controllerLayout);
+		keyTable.setModel(keyTableModel);
+		keyTable.setRowHeight(22);
+		AwtComponentCellEditor cellEditor = new AwtComponentCellEditor();
+		TableColumn keyLabelColumn = keyTable.getColumnModel().getColumn(1);
+		keyLabelColumn.setCellRenderer(cellEditor);
+		keyLabelColumn.setCellEditor(cellEditor);
+		TableColumn noneButtonColumn = keyTable.getColumnModel().getColumn(2);
+		noneButtonColumn.setCellRenderer(cellEditor);
+		noneButtonColumn.setCellEditor(cellEditor);
+		TableColumn deleteButtonColumn = keyTable.getColumnModel().getColumn(3);
+		deleteButtonColumn.setCellRenderer(cellEditor);
+		deleteButtonColumn.setCellEditor(cellEditor);
+		
+		keyScrollPane = new JScrollPane(keyTable);
+		int keyScrollPaneWidth = keyScrollPane.getPreferredSize().width;
+		keyScrollPane.setPreferredSize(new Dimension(keyScrollPaneWidth, keyTable.getRowHeight() * 10));
+		
+		setFocusable(true);
+		addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {}
+			@Override
+			public void keyReleased(KeyEvent e) {}
+			@Override
+			public void keyPressed(KeyEvent e) {
+				keyTableModel.keyPressed(e);
+			}
+		});
+		
 		doneButton = new JButton("Done");
+		doneButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				doneButtonPressed();
+			}
+		});
+		
 		saveButton = new JButton("Save");
 		loadButton = new JButton("Load");
 
-		// set layout to grid bag
-		setLayout(new GridBagLayout());
-		GridBagConstraints constraints = new GridBagConstraints();
-
 		// add ui elements
-		constraints.anchor = GridBagConstraints.WEST;
+		JPanel topPanel = new JPanel();
+		topPanel.setLayout(new FlowLayout());
+		topPanel.add(new JLabel("Controller #:"));
+		topPanel.add(controllerNumberComboBox);
+		topPanel.add(addControllerButton);
+		topPanel.add(removeControllerButton);
 
-		constraints.insets = new Insets(5, 5, 5, 0);
-		add(new JLabel("Controller #:"), constraints);
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setLayout(new FlowLayout());
+		bottomPanel.add(doneButton);
+		bottomPanel.add(saveButton);
+		bottomPanel.add(loadButton);
 
-		constraints.insets = new Insets(5, 5, 5, 0);
-		add(controllerNumberComboBox, constraints);
-
-		constraints.insets = new Insets(5, 5, 5, 0);
-		add(addControllerButton, constraints);
-
-		constraints.insets = new Insets(5, 5, 5, 5);
-		add(removeControllerButton, constraints);
-
-		constraints.gridy = 1;
-		constraints.insets = new Insets(5, 5, 5, 0);
-		add(doneButton, constraints);
-
-		constraints.insets = new Insets(5, 5, 5, 0);
-		add(saveButton, constraints);
-
-		constraints.insets = new Insets(5, 5, 5, 5);
-		add(loadButton, constraints);
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		add(topPanel);
+		add(keyScrollPane);
+		add(bottomPanel);
 	}
 
 	private void setControllerNumber(int controllerNumber) {
 		this.controllerNumber = controllerNumber;
-		// TODO
+		keyTableModel.setControllerNumber(controllerNumber);
 	}
 
 	private void addController() {
@@ -106,6 +140,10 @@ public class ConfigureControllerPanel extends JPanel {
 		controllerNumberComboBox.removeItemAt(controllerNumberComboBox.getItemCount() - 1);
 		controllerNumberComboBox.setSelectedIndex(0);
 		setControllerNumber((Integer) controllerNumberComboBox.getSelectedItem());
+	}
+	
+	private void doneButtonPressed() {
+		controlPanel.controllerConfigureDone();
 	}
 
 	public void setControllerLayout(ConfigurableControllerLayout controllerLayout) {

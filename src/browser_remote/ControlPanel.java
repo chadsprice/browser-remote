@@ -19,7 +19,7 @@ import org.java_websocket.WebSocket;
 import org.java_websocket.framing.CloseFrame;
 
 @SuppressWarnings("serial")
-public class ControlPanel extends JPanel implements ActionListener, WindowFocusListener {
+public class ControlPanel extends JPanel implements WindowFocusListener {
 
 	private static final int DEFAULT_HTTP_PORT = 8080;
 	private static final int DEFAULT_WEBSOCKET_PORT = 8081;
@@ -99,10 +99,20 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		});
 
 		controllerConfigureButton = new JButton("Configure");
-		controllerConfigureButton.addActionListener(this);
+		controllerConfigureButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				controllerConfigureButtonPressed();
+			}
+		});
 
 		startButton = new JButton("Start");
-		startButton.addActionListener(this);
+		startButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				runButtonPressed();
+			}
+		});
 
 		serverStateLabel = new JLabel();
 
@@ -175,7 +185,7 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		// configure controller window
 		configurableControllerLayout = new ConfigurableControllerLayout();
 		
-		configureControllerPanel = new ConfigureControllerPanel(configurableControllerLayout);
+		configureControllerPanel = new ConfigureControllerPanel(this, configurableControllerLayout);
 		configureControllerFrame = new JFrame("Configure Controller");
 		configureControllerFrame.add(configureControllerPanel);
 		configureControllerFrame.pack();
@@ -199,15 +209,6 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent action) {
-		if (action.getSource() == controllerConfigureButton) {
-			handleControllerConfigureButtonPress();
-		} else if (action.getSource() == startButton) {
-			handleRunButtonPress();
-		}
-	}
-
-	@Override
 	public void windowLostFocus(WindowEvent arg0) {
 		windowFocused = false;
 		updateServerStateLabel();
@@ -222,12 +223,15 @@ public class ControlPanel extends JPanel implements ActionListener, WindowFocusL
 		}
 	}
 
-	private void handleControllerConfigureButtonPress() {
-		// TODO
+	private void controllerConfigureButtonPressed() {
 		configureControllerFrame.setVisible(true);
 	}
+	
+	public void controllerConfigureDone() {
+		configureControllerFrame.setVisible(false);
+	}
 
-	private void handleRunButtonPress() {
+	private void runButtonPressed() {
 		serverRunning = !serverRunning;
 		if (serverRunning) {
 			startButton.setText("Stop");

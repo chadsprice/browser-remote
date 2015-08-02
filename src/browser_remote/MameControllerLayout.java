@@ -11,12 +11,12 @@ import java.util.Set;
 
 public class MameControllerLayout implements ControllerLayout {
 
-	private Set<String> buttons;
+	private List<String> buttons;
 	private List<Map<String, Integer>> buttonMaps;
 	
 	public MameControllerLayout() {
 		String[] buttonArray = {"up", "down", "left", "right", "start", "select", "a", "b", "x", "y", "l", "r"};
-		buttons = new HashSet<String>(Arrays.asList(buttonArray));
+		buttons = Arrays.asList(buttonArray);
 		Map<String, Integer> player1Map = new HashMap<String, Integer>();
 		player1Map.put("up", KeyEvent.VK_UP);
 		player1Map.put("down", KeyEvent.VK_DOWN);
@@ -47,7 +47,7 @@ public class MameControllerLayout implements ControllerLayout {
 	}
 	
 	@Override
-	public Set<String> getButtons() {
+	public List<String> getButtons() {
 		return buttons;
 	}
 
