@@ -33,14 +33,15 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	private RemoteServer remoteServer;
 	private Set<String> banned;
 
-	private ControllerLayout controllerLayout;
+	private ConfigurableControllerLayout controllerLayout;
 	private boolean serverRunning;
 	private boolean windowFocused;
+	private boolean configuringController;
 
-	private Set<User> users;
+	private List<User> users;
 	private boolean userTableShown;
 
-	private JComboBox<ControllerLayout> controllerComboBox;
+	private JComboBox<ConfigurableControllerLayout> controllerComboBox;
 	private JButton controllerConfigureButton;
 	private JButton startButton;
 	private JLabel serverStateLabel;
@@ -49,8 +50,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	private JTable userTable;
 	private UserTableModel userTableModel;
 	private JScrollPane userScrollPane;
-	
-	private ConfigurableControllerLayout configurableControllerLayout;
+
 	private ConfigureControllerPanel configureControllerPanel;
 	private JFrame configureControllerFrame;
 
@@ -62,8 +62,8 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 			System.exit(-1);
 		}
 		banned = new HashSet<String>();
-		controllerLayout = new ZsnesControllerLayout();
-		users = new HashSet<User>();
+		controllerLayout = new ConfigurableControllerLayout("ZSNES");
+		users = new ArrayList<User>();
 
 		// find url address
 		try {
@@ -87,14 +87,14 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout, new MameControllerLayout()});
+		controllerComboBox = new JComboBox<ConfigurableControllerLayout>(new ConfigurableControllerLayout[] {controllerLayout, new ConfigurableControllerLayout("MAME")});
 		controllerComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				for (User user : users) {
 					releaseAllButtons(user);
 				}
-				controllerLayout = (ControllerLayout) controllerComboBox.getSelectedItem();
+				controllerLayout = (ConfigurableControllerLayout) controllerComboBox.getSelectedItem();
 			}
 		});
 
@@ -181,18 +181,35 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		constraints.gridy = 4;
 		constraints.gridwidth = 3;
 		add(usersConnectedLabel, constraints);
-		
+
 		// configure controller window
-		configurableControllerLayout = new ConfigurableControllerLayout();
-		
-		configureControllerPanel = new ConfigureControllerPanel(this, configurableControllerLayout);
+		configureControllerPanel = new ConfigureControllerPanel(this, controllerLayout);
 		configureControllerFrame = new JFrame("Configure Controller");
 		configureControllerFrame.add(configureControllerPanel);
 		configureControllerFrame.pack();
+		
+		configureControllerFrame.addWindowListener(new WindowListener() {
+			@Override
+			public void windowOpened(WindowEvent e) {}
+			@Override
+			public void windowIconified(WindowEvent e) {}
+			@Override
+			public void windowDeiconified(WindowEvent e) {}
+			@Override
+			public void windowDeactivated(WindowEvent e) {}
+			@Override
+			public void windowClosing(WindowEvent e) {
+				controllerConfigureDone();
+			}
+			@Override
+			public void windowClosed(WindowEvent e) {}
+			@Override
+			public void windowActivated(WindowEvent e) {}
+		});
 	}
 
 	public boolean isRunning() {
-		return serverRunning && !windowFocused;
+		return serverRunning && !windowFocused && !configuringController;
 	}
 
 	public void startRemoteServer() {
@@ -224,11 +241,34 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	}
 
 	private void controllerConfigureButtonPressed() {
+		configuringController = true;
 		configureControllerFrame.setVisible(true);
+		updateServerStateLabel();
 	}
-	
+
 	public void controllerConfigureDone() {
+		int numberOfControllers = controllerLayout.getNumberOfControllers();
+		for (int i = 0; i < userTableModel.getRowCount(); i++) {
+			@SuppressWarnings("unchecked")
+			JComboBox<Integer> controllerNumberBox = (JComboBox<Integer>) userTableModel.getValueAt(i, 1);
+			if (controllerNumberBox.getItemCount() < numberOfControllers) {
+				for (int n = controllerNumberBox.getItemCount() + 1; n <= numberOfControllers; n++) {
+					controllerNumberBox.addItem(n);
+				}
+			} else if (controllerNumberBox.getItemCount() > numberOfControllers) {
+				User user = users.get(i);
+				if (user.controllerNumber > numberOfControllers) {
+					user.controllerNumber = numberOfControllers;
+					controllerNumberBox.setSelectedItem(user.controllerNumber);
+				}
+				for (int n = controllerNumberBox.getItemCount(); n > numberOfControllers; n--) {
+					controllerNumberBox.removeItem(n);
+				}
+			}
+		}
+		configuringController = false;
 		configureControllerFrame.setVisible(false);
+		updateServerStateLabel();
 	}
 
 	private void runButtonPressed() {
@@ -243,10 +283,14 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 
 	private void updateServerStateLabel() {
 		if (serverRunning) {
-			if (windowFocused) {
-				serverStateLabel.setText("<html>The remote is <font color='gray'>PAUSED</font> in this window</html>");
+			if (configuringController) {
+				serverStateLabel.setText("<html>The remote is <font color='gray'>PAUSED</font></html>");
 			} else {
-				serverStateLabel.setText("<html>The remote is <font color='green'>ON</font></html>");
+				if (windowFocused) {
+					serverStateLabel.setText("<html>The remote is <font color='gray'>PAUSED</font> in this window</html>");
+				} else {
+					serverStateLabel.setText("<html>The remote is <font color='green'>ON</font></html>");
+				}
 			}
 		} else {
 			serverStateLabel.setText("<html>The remote is <font color='gray'>OFF</font></html>");

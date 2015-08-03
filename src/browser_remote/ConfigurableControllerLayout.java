@@ -5,10 +5,12 @@ import java.util.*;
 
 public class ConfigurableControllerLayout implements ControllerLayout {
 
+	private String name;
 	private List<String> buttons;
 	private List<Map<String, Integer>> keyMaps;
 
-	public ConfigurableControllerLayout() {
+	public ConfigurableControllerLayout(String name) {
+		this.name = name;
 		buttons = new ArrayList<String>();
 		keyMaps = new ArrayList<Map<String, Integer>>();
 		
@@ -65,11 +67,6 @@ public class ConfigurableControllerLayout implements ControllerLayout {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return "Custom";
-	}
-
 	public void addController() {
 		Map<String, Integer> keyMap = new HashMap<String, Integer>();
 		for (String button : buttons) {
@@ -99,4 +96,9 @@ public class ConfigurableControllerLayout implements ControllerLayout {
 		keyMaps.get(controllerNumber - 1).put(button, key);
 	}
 
+	@Override
+	public String toString() {
+		return name;
+	}
+	
 }

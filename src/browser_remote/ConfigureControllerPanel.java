@@ -30,6 +30,7 @@ public class ConfigureControllerPanel extends JPanel {
 	public ConfigureControllerPanel(ControlPanel controlPanel, ConfigurableControllerLayout controllerLayout) {
 		this.controlPanel = controlPanel;
 		this.controllerLayout = controllerLayout;
+		controllerNumber = 1;
 
 		controllerNumberComboBox = new JComboBox<Integer>();
 		int numberOfControllers = controllerLayout.getNumberOfControllers();
@@ -49,7 +50,7 @@ public class ConfigureControllerPanel extends JPanel {
 		addControllerButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				addController();
+				addControllerButtonPressed();
 			}
 		});
 
@@ -57,7 +58,7 @@ public class ConfigureControllerPanel extends JPanel {
 		removeControllerButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				removeController();
+				removeControllerButtonPressed();
 			}
 		});
 		
@@ -128,17 +129,23 @@ public class ConfigureControllerPanel extends JPanel {
 		keyTableModel.setControllerNumber(controllerNumber);
 	}
 
-	private void addController() {
+	private void addControllerButtonPressed() {
+		if (controllerLayout.getNumberOfControllers() == 1) {
+			removeControllerButton.setEnabled(true);
+		}
 		controllerLayout.addController();
 		controllerNumberComboBox.addItem(controllerLayout.getNumberOfControllers());
 		controllerNumberComboBox.setSelectedIndex(controllerNumberComboBox.getItemCount() - 1);
 		setControllerNumber(controllerNumberComboBox.getItemAt(controllerNumberComboBox.getItemCount() - 1));
 	}
 
-	private void removeController() {
+	private void removeControllerButtonPressed() {
+		if (controllerLayout.getNumberOfControllers() == 2) {
+			removeControllerButton.setEnabled(false);
+		}
 		controllerLayout.removeController(controllerNumber);
 		controllerNumberComboBox.removeItemAt(controllerNumberComboBox.getItemCount() - 1);
-		controllerNumberComboBox.setSelectedIndex(0);
+		controllerNumberComboBox.setSelectedIndex(controllerNumberComboBox.getItemCount() - 1);
 		setControllerNumber((Integer) controllerNumberComboBox.getSelectedItem());
 	}
 	
