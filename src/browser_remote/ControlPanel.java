@@ -95,6 +95,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 					releaseAllButtons(user);
 				}
 				controllerLayout = (ConfigurableControllerLayout) controllerComboBox.getSelectedItem();
+				configureControllerPanel.setControllerLayout(controllerLayout);
 			}
 		});
 
@@ -244,6 +245,12 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		configuringController = true;
 		configureControllerFrame.setVisible(true);
 		updateServerStateLabel();
+	}
+	
+	public void loadedNewControllerLayout(ConfigurableControllerLayout controllerLayout) {
+		controllerComboBox.addItem(controllerLayout);
+		controllerComboBox.setSelectedItem(controllerLayout);
+		configureControllerPanel.setControllerLayout(controllerLayout);
 	}
 
 	public void controllerConfigureDone() {
