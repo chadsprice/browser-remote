@@ -20,6 +20,8 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings("serial")
 public class ConfigureControllerPanel extends JPanel {
 
+	private static int KEY_TABLE_DISPLAY_ROWS = 15;
+	
 	private static FileNameExtensionFilter FILE_FILTER = new FileNameExtensionFilter("Configuration Files", "cfg");
 	private static JFileChooser configFileChooser() {
 		JFileChooser fileChooser = new JFileChooser();
@@ -84,7 +86,8 @@ public class ConfigureControllerPanel extends JPanel {
 
 		keyScrollPane = new JScrollPane(keyTable);
 		int keyScrollPaneWidth = keyScrollPane.getPreferredSize().width;
-		keyScrollPane.setPreferredSize(new Dimension(keyScrollPaneWidth, keyTable.getRowHeight() * 10));
+		int keyScrollPaneHeight = keyTable.getRowHeight() * KEY_TABLE_DISPLAY_ROWS;
+		keyScrollPane.setPreferredSize(new Dimension(keyScrollPaneWidth, keyScrollPaneHeight));
 
 		setFocusable(true);
 		addKeyListener(new KeyListener() {

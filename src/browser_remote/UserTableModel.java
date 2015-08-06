@@ -7,7 +7,7 @@ import javax.swing.table.AbstractTableModel;
 @SuppressWarnings("serial")
 public class UserTableModel extends AbstractTableModel {
 
-	private static final String[] columnNames = {"IP", "Controller #", "Lock #", "", ""};
+	private static final String[] columnNames = {"IP", "Controller #", "", ""};
 
 	private List<Object[]> data;
 
@@ -49,10 +49,7 @@ public class UserTableModel extends AbstractTableModel {
 
 	@Override
 	public boolean isCellEditable(int row, int column) {
-		if (column == 0) {
-			return false;
-		}
-		return true;
+		return column != 0;
 	}
 
 	public void addRow(Object[] row) {

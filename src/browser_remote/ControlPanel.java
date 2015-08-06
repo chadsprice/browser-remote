@@ -7,6 +7,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.*;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -57,27 +58,37 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	public ControlPanel() {
 		try {
 			keyPresser = new KeyPresser();
-		} catch (AWTException e1) {
-			e1.printStackTrace();
+		} catch (AWTException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Your system does not have low-level input control.", "AWT Error", JOptionPane.ERROR_MESSAGE);
+			System.exit(-1);
+		} catch (SecurityException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "This program does not have permission to access the keyboard.", "Permissions Error", JOptionPane.ERROR_MESSAGE);
 			System.exit(-1);
 		}
 		banned = new HashSet<String>();
-		controllerLayout = new ConfigurableControllerLayout("ZSNES");
+		controllerLayout = ConfigurableControllerLayout.zsnesControllerLayout();
 		users = new ArrayList<User>();
 
-		// find url address
+		// find host address
 		try {
 			urlAddress = null;
+			// examine all network interfaces
 			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
 			while(interfaces.hasMoreElements()) {
 				NetworkInterface networkInterface = (NetworkInterface) interfaces.nextElement();
+				// examine all addresses
 				Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
 				while (addresses.hasMoreElements()) {
 					InetAddress address = (InetAddress) addresses.nextElement();
 					String hostAddress = address.getHostAddress();
+					// accept the last address beginning with "192.168."
 					if (hostAddress.startsWith("192.168.")) {
 						urlAddress = hostAddress;
 					} else if (urlAddress == null && hostAddress.startsWith("10.")) {
+						// accept the last address beginning with "10."
+						// if none starting with "192.168." is found
 						urlAddress = hostAddress;
 					}
 				}
@@ -87,7 +98,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox<ConfigurableControllerLayout>(new ConfigurableControllerLayout[] {controllerLayout, new ConfigurableControllerLayout("MAME")});
+		controllerComboBox = new JComboBox<ConfigurableControllerLayout>(new ConfigurableControllerLayout[] {controllerLayout, ConfigurableControllerLayout.mameControllerLayout()});
 		controllerComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -126,17 +137,16 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		userTable.setModel(userTableModel);
 		userTable.setRowHeight(22);
 		userTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-		userTable.getColumnModel().getColumn(2).setPreferredWidth(45);
+		userTable.getColumnModel().getColumn(2).setPreferredWidth(50);
 		userTable.getColumnModel().getColumn(3).setPreferredWidth(50);
-		userTable.getColumnModel().getColumn(4).setPreferredWidth(50);
 		AwtComponentCellEditor cellEditor = new AwtComponentCellEditor();
 		TableColumn controllerNumberColumn = userTable.getColumnModel().getColumn(1);
 		controllerNumberColumn.setCellRenderer(cellEditor);
 		controllerNumberColumn.setCellEditor(cellEditor);
-		TableColumn kickColumn = userTable.getColumnModel().getColumn(3);
+		TableColumn kickColumn = userTable.getColumnModel().getColumn(2);
 		kickColumn.setCellRenderer(cellEditor);
 		kickColumn.setCellEditor(cellEditor);
-		TableColumn banColumn = userTable.getColumnModel().getColumn(4);
+		TableColumn banColumn = userTable.getColumnModel().getColumn(3);
 		banColumn.setCellRenderer(cellEditor);
 		banColumn.setCellEditor(cellEditor);
 
@@ -188,7 +198,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		configureControllerFrame = new JFrame("Configure Controller");
 		configureControllerFrame.add(configureControllerPanel);
 		configureControllerFrame.pack();
-		
+
 		configureControllerFrame.addWindowListener(new WindowListener() {
 			@Override
 			public void windowOpened(WindowEvent e) {}
@@ -222,7 +232,11 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		try {
 			new HttpServer(httpPort);
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Failed to start HTTP server.", "HTTP Server Error", JOptionPane.ERROR_MESSAGE);
+			String errorMessage = "Failed to start HTTP server.";
+			if (e instanceof BindException) {
+				errorMessage += String.format("\nAnother running program is using port %d.", httpPort);
+			}
+			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), errorMessage, "HTTP Server Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -246,7 +260,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		configureControllerFrame.setVisible(true);
 		updateServerStateLabel();
 	}
-	
+
 	public void loadedNewControllerLayout(ConfigurableControllerLayout controllerLayout) {
 		controllerComboBox.addItem(controllerLayout);
 		controllerComboBox.setSelectedItem(controllerLayout);
@@ -338,31 +352,44 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 
 	public void remoteOpened(WebSocket conn) {
 		String ip = conn.getRemoteSocketAddress().getAddress().getHostAddress();
-		// check if it is a user that has been banned
+		// check if the user has been banned
 		if (banned.contains(ip)) {
 			conn.close(CloseFrame.NORMAL);
 			return;
 		}
-		// check if it is a user that is already connected
+		// check if the user is already connected
 		for (User user : users) {
 			if (user.ip.equals(ip)) {
+				// close the old connection and replace it with the new one
 				user.conn.close(CloseFrame.NORMAL);
 				user.conn = conn;
 				return;
 			}
 		}
-		final User user = new User(conn, 1, controllerLayout);
+		// create new user
+		// find which controller numbers have already been used
+		Set<Integer> usedControllerNumbers = new HashSet<Integer>();
+		for (User user : users) {
+			usedControllerNumbers.add(user.controllerNumber);
+		}
+		// select the next unused controller number, or if all are taken
+		// use the last controller number
+		int controllerNumber = 1;
+		while (controllerNumber <= controllerLayout.getNumberOfControllers() &&
+				usedControllerNumbers.contains(controllerNumber)) {
+			controllerNumber++;
+		}
+		final User user = new User(conn, controllerNumber, controllerLayout);
 		users.add(user);
 		// add user to table
 		if (!userTableShown) {
 			showUserTable();
 		}
-		int numberOfControllers = controllerLayout.getNumberOfControllers();
-		Integer[] controllerNumbers = new Integer[numberOfControllers];
-		for (int i = 0; i < numberOfControllers; i++) {
-			controllerNumbers[i] = i + 1;
+		final JComboBox<Integer> controllerNumberBox = new JComboBox<Integer>();
+		for (int i = 0; i < controllerLayout.getNumberOfControllers(); i++) {
+			controllerNumberBox.addItem(i + 1);
 		}
-		final JComboBox<Integer> controllerNumberBox = new JComboBox<Integer>(controllerNumbers);
+		controllerNumberBox.setSelectedItem(controllerNumber);
 		controllerNumberBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -385,7 +412,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 				banned.add(user.ip);
 			}
 		});
-		userTableModel.addRow(new Object[] {ip, controllerNumberBox, false, kick, ban});
+		userTableModel.addRow(new Object[] {ip, controllerNumberBox, kick, ban});
 		updateUsersConnectedLabel();
 	}
 
