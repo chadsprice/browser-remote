@@ -1,7 +1,8 @@
 package browser_remote;
 
-import java.awt.event.KeyEvent;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class ControllerLayout {
@@ -20,6 +21,58 @@ public class ControllerLayout {
 		buttonPositions = new HashMap<String, Rectangle2D.Double>();
 		defaultBrowserKeyCodes = new HashMap<String, Integer>();
 		ipBrowserKeyCodes = new HashMap<String, Map<String, Integer>>();
+	}
+	
+	public static ControllerLayout loadFromFile(String filename) {
+		return loadFromFile(new File(filename));
+	}
+	
+	public static ControllerLayout loadFromFile(File file) {
+		Scanner scanner = null;
+		try {
+			scanner = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+		String name = file.getName();
+		if (name.endsWith(".cfg")) {
+			name = name.substring(0, name.length() - 4);
+		}
+		ControllerLayout loadedLayout = new ControllerLayout(name);
+		loadedLayout.addController();
+		while (scanner.hasNextLine()) {
+			String[] tokens = scanner.nextLine().split(" ");
+			if (tokens[0].equals("button")) {
+				if (tokens.length == 7) {
+					String button = tokens[1];
+					loadedLayout.addButton(button);
+					try {
+						double width = Double.parseDouble(tokens[2]);
+						double height = Double.parseDouble(tokens[3]);
+						double left = Double.parseDouble(tokens[4]);
+						double top = Double.parseDouble(tokens[5]);
+						loadedLayout.setButtonPosition(button, new Rectangle2D.Double(width, height, left, top));
+						int keyCode = Integer.parseInt(tokens[6]);
+						loadedLayout.setDefaultBrowserKeyCode(button, keyCode);
+					} catch (NumberFormatException e) {
+						// TODO
+					}
+				}
+			} else if (tokens[0].equals("map")) {
+				if (tokens.length == 3) {
+					try {
+						int key = Integer.parseInt(tokens[2]);
+						loadedLayout.setKey(loadedLayout.getNumberOfControllers(), tokens[1], key);
+					} catch (NumberFormatException e) {
+						// TODO
+					}
+				}
+			} else if (tokens[0].equals("new_controller")) {
+				loadedLayout.addController();
+			}
+		}
+		scanner.close();
+		return loadedLayout;
 	}
 
 	public List<String> getButtons() {
@@ -98,122 +151,6 @@ public class ControllerLayout {
 	@Override
 	public String toString() {
 		return name;
-	}
-
-	public static ControllerLayout zsnesControllerLayout() {
-		ControllerLayout layout = new ControllerLayout("ZSNES");
-		String[] buttonArray = {"up", "down", "left", "right", "start", "select", "a", "b", "x", "y", "l", "r"};
-		layout.buttons.addAll(Arrays.asList(buttonArray));
-		layout.defaultBrowserKeyCodes.put("up", 38);
-		layout.defaultBrowserKeyCodes.put("down", 40);
-		layout.defaultBrowserKeyCodes.put("left", 37);
-		layout.defaultBrowserKeyCodes.put("right", 39);
-		layout.defaultBrowserKeyCodes.put("start", 13);
-		layout.defaultBrowserKeyCodes.put("select", 16);
-		layout.defaultBrowserKeyCodes.put("a", 88);
-		layout.defaultBrowserKeyCodes.put("b", 90);
-		layout.defaultBrowserKeyCodes.put("x", 83);
-		layout.defaultBrowserKeyCodes.put("y", 65);
-		layout.defaultBrowserKeyCodes.put("l", 68);
-		layout.defaultBrowserKeyCodes.put("r", 67);
-		layout.buttonPositions.put("up", new Rectangle2D.Double(0.07, 0.07, 0.17, 0.20));
-		layout.buttonPositions.put("down", new Rectangle2D.Double(0.07, 0.07, 0.17, 0.34));
-		layout.buttonPositions.put("left", new Rectangle2D.Double(0.07, 0.07, 0.10, 0.27));
-		layout.buttonPositions.put("right", new Rectangle2D.Double(0.07, 0.07, 0.24, 0.27));
-		layout.buttonPositions.put("start", new Rectangle2D.Double(0.095, 0.08, 0.463, 0.293));
-		layout.buttonPositions.put("select", new Rectangle2D.Double(0.095, 0.08, 0.36, 0.293));
-		layout.buttonPositions.put("a", new Rectangle2D.Double(0.1, 0.1, 0.805, 0.255));
-		layout.buttonPositions.put("b", new Rectangle2D.Double(0.1, 0.1, 0.705, 0.325));
-		layout.buttonPositions.put("x", new Rectangle2D.Double(0.1, 0.1, 0.70, 0.175));
-		layout.buttonPositions.put("y", new Rectangle2D.Double(0.1, 0.1, 0.60, 0.245));
-		layout.buttonPositions.put("l", new Rectangle2D.Double(0.24, 0.06, 0.09, 0.06));
-		layout.buttonPositions.put("r", new Rectangle2D.Double(0.24, 0.06, 0.62, 0.06));
-		Map<String, Integer> p1Keys = new HashMap<String, Integer>();
-		p1Keys.put("up", KeyEvent.VK_UP);
-		p1Keys.put("down", KeyEvent.VK_DOWN);
-		p1Keys.put("left", KeyEvent.VK_LEFT);
-		p1Keys.put("right", KeyEvent.VK_RIGHT);
-		p1Keys.put("start", KeyEvent.VK_ENTER);
-		p1Keys.put("select", KeyEvent.VK_SHIFT);
-		p1Keys.put("a", KeyEvent.VK_X);
-		p1Keys.put("b", KeyEvent.VK_Z);
-		p1Keys.put("x", KeyEvent.VK_S);
-		p1Keys.put("y", KeyEvent.VK_A);
-		p1Keys.put("l", KeyEvent.VK_D);
-		p1Keys.put("r", KeyEvent.VK_C);
-		layout.keyMaps.add(p1Keys);
-		Map<String, Integer> p2Keys = new HashMap<String, Integer>();
-		p2Keys.put("up", KeyEvent.VK_J);
-		p2Keys.put("down", KeyEvent.VK_M);
-		p2Keys.put("left", KeyEvent.VK_N);
-		p2Keys.put("right", KeyEvent.VK_COMMA);
-		p2Keys.put("start", KeyEvent.VK_CONTROL);
-		p2Keys.put("select", KeyEvent.VK_ALT);
-		p2Keys.put("a", KeyEvent.VK_HOME);
-		p2Keys.put("b", KeyEvent.VK_END);
-		p2Keys.put("x", KeyEvent.VK_INSERT);
-		p2Keys.put("y", KeyEvent.VK_DELETE);
-		p2Keys.put("l", KeyEvent.VK_PAGE_UP);
-		p2Keys.put("r", KeyEvent.VK_PAGE_DOWN);
-		layout.keyMaps.add(p2Keys);
-		return layout;
-	}
-	
-	public static ControllerLayout mameControllerLayout() {
-		ControllerLayout layout = new ControllerLayout("MAME");
-		String[] buttonArray = {"up", "down", "left", "right", "start", "select", "a", "b", "x", "y", "l", "r"};
-		layout.buttons.addAll(Arrays.asList(buttonArray));
-		layout.defaultBrowserKeyCodes.put("up", 38);
-		layout.defaultBrowserKeyCodes.put("down", 40);
-		layout.defaultBrowserKeyCodes.put("left", 37);
-		layout.defaultBrowserKeyCodes.put("right", 39);
-		layout.defaultBrowserKeyCodes.put("start", 13);
-		layout.defaultBrowserKeyCodes.put("select", 16);
-		layout.defaultBrowserKeyCodes.put("a", 88);
-		layout.defaultBrowserKeyCodes.put("b", 90);
-		layout.defaultBrowserKeyCodes.put("x", 83);
-		layout.defaultBrowserKeyCodes.put("y", 65);
-		layout.defaultBrowserKeyCodes.put("l", 68);
-		layout.defaultBrowserKeyCodes.put("r", 67);
-		layout.buttonPositions.put("up", new Rectangle2D.Double(0.07, 0.07, 0.17, 0.20));
-		layout.buttonPositions.put("down", new Rectangle2D.Double(0.07, 0.07, 0.17, 0.34));
-		layout.buttonPositions.put("left", new Rectangle2D.Double(0.07, 0.07, 0.10, 0.27));
-		layout.buttonPositions.put("right", new Rectangle2D.Double(0.07, 0.07, 0.24, 0.27));
-		layout.buttonPositions.put("start", new Rectangle2D.Double(0.095, 0.08, 0.463, 0.293));
-		layout.buttonPositions.put("select", new Rectangle2D.Double(0.095, 0.08, 0.36, 0.293));
-		layout.buttonPositions.put("a", new Rectangle2D.Double(0.1, 0.1, 0.805, 0.255));
-		layout.buttonPositions.put("b", new Rectangle2D.Double(0.1, 0.1, 0.705, 0.325));
-		layout.buttonPositions.put("x", new Rectangle2D.Double(0.1, 0.1, 0.70, 0.175));
-		layout.buttonPositions.put("y", new Rectangle2D.Double(0.1, 0.1, 0.60, 0.245));
-		layout.buttonPositions.put("l", new Rectangle2D.Double(0.24, 0.06, 0.09, 0.06));
-		layout.buttonPositions.put("r", new Rectangle2D.Double(0.24, 0.06, 0.62, 0.06));
-		Map<String, Integer> p1Keys = new HashMap<String, Integer>();
-		p1Keys.put("up", KeyEvent.VK_UP);
-		p1Keys.put("down", KeyEvent.VK_DOWN);
-		p1Keys.put("left", KeyEvent.VK_LEFT);
-		p1Keys.put("right", KeyEvent.VK_RIGHT);
-		p1Keys.put("start", KeyEvent.VK_1);
-		p1Keys.put("select", KeyEvent.VK_5);
-		p1Keys.put("a", KeyEvent.VK_CONTROL);
-		p1Keys.put("b", KeyEvent.VK_ALT);
-		p1Keys.put("x", KeyEvent.VK_SPACE);
-		p1Keys.put("y", KeyEvent.VK_SHIFT);
-		p1Keys.put("l", KeyEvent.VK_Z);
-		p1Keys.put("r", KeyEvent.VK_X);
-		layout.keyMaps.add(p1Keys);
-		Map<String, Integer> p2Keys = new HashMap<String, Integer>();
-		p2Keys.put("up", KeyEvent.VK_R);
-		p2Keys.put("down", KeyEvent.VK_F);
-		p2Keys.put("left", KeyEvent.VK_D);
-		p2Keys.put("right", KeyEvent.VK_G);
-		p2Keys.put("start", KeyEvent.VK_2);
-		p2Keys.put("select", KeyEvent.VK_6);
-		p2Keys.put("a", KeyEvent.VK_A);
-		p2Keys.put("b", KeyEvent.VK_S);
-		p2Keys.put("x", KeyEvent.VK_Q);
-		p2Keys.put("y", KeyEvent.VK_W);
-		layout.keyMaps.add(p2Keys);
-		return layout;
 	}
 	
 }

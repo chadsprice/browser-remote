@@ -47,12 +47,6 @@ public class HttpServer extends NanoHTTPD {
 			}
 			InputStream stream = WebpageGenerator.generatePage(controlPanel, ip);
 			return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, stream);
-			/*InputStream stream = getResource("http_resources/snes_controller.html");
-			if (stream != null) {
-				return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, stream);
-			} else {
-				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
-			}*/
 		} else if(uri.contains("svg_snes_controller.svg")) {
 			InputStream stream = getResource("http_resources/snes_controller.svg");
 			if (stream != null) {

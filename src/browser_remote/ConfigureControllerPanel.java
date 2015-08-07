@@ -9,10 +9,8 @@ import java.awt.event.KeyListener;
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -208,57 +206,16 @@ public class ConfigureControllerPanel extends JPanel {
 		JFileChooser fileChooser = configFileChooser();
 		int returnValue = fileChooser.showOpenDialog(getParent());
 		if (returnValue == JFileChooser.APPROVE_OPTION) {
-			loadConfiguration(fileChooser.getSelectedFile());
+			addLayoutFromFile(fileChooser.getSelectedFile());
 		}
 	}
 
-	private void loadConfiguration(File file) {
-		Scanner scanner = null;
-		try {
-			scanner = new Scanner(file);
-		} catch (FileNotFoundException e) {
+	private void addLayoutFromFile(File file) {
+		ControllerLayout layout = ControllerLayout.loadFromFile(file);
+		if (file == null) {
 			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Failed to read file.", "Load Error", JOptionPane.ERROR_MESSAGE);
-			return;
 		}
-		String name = file.getName();
-		if (name.endsWith(".cfg")) {
-			name = name.substring(0, name.length() - 4);
-		}
-		ControllerLayout loadedLayout = new ControllerLayout(name);
-		loadedLayout.addController();
-		while (scanner.hasNextLine()) {
-			String[] tokens = scanner.nextLine().split(" ");
-			if (tokens[0].equals("button")) {
-				if (tokens.length == 7) {
-					String button = tokens[1];
-					loadedLayout.addButton(button);
-					try {
-						double width = Double.parseDouble(tokens[2]);
-						double height = Double.parseDouble(tokens[3]);
-						double left = Double.parseDouble(tokens[4]);
-						double top = Double.parseDouble(tokens[5]);
-						loadedLayout.setButtonPosition(button, new Rectangle2D.Double(width, height, left, top));
-						int keyCode = Integer.parseInt(tokens[6]);
-						loadedLayout.setDefaultBrowserKeyCode(button, keyCode);
-					} catch (NumberFormatException e) {
-						// TODO
-					}
-				}
-			} else if (tokens[0].equals("map")) {
-				if (tokens.length == 3) {
-					try {
-						int key = Integer.parseInt(tokens[2]);
-						loadedLayout.setKey(loadedLayout.getNumberOfControllers(), tokens[1], key);
-					} catch (NumberFormatException e) {
-						// TODO
-					}
-				}
-			} else if (tokens[0].equals("new_controller")) {
-				loadedLayout.addController();
-			}
-		}
-		controlPanel.loadedNewControllerLayout(loadedLayout);
-		scanner.close();
+		controlPanel.loadedNewControllerLayout(layout);
 	}
 	
 	private void saveButtonPressed() {

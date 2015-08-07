@@ -15,7 +15,7 @@ public class WebpageGenerator {
 	static {
 		keyCodeNames = new HashMap<Integer, String>();
 		for (int i = 0; i < 26; i++) {
-			keyCodeNames.put(65 + i, ('A' + i) + "");
+			keyCodeNames.put(65 + i, Character.toString((char) ('A' + i)));
 		}
 		keyCodeNames.put(32, "SPACE");
 		keyCodeNames.put(13, "ENTER");

@@ -68,7 +68,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 			System.exit(-1);
 		}
 		banned = new HashSet<String>();
-		controllerLayout = ControllerLayout.zsnesControllerLayout();
+		controllerLayout = ControllerLayout.loadFromFile("ZSNES.cfg");
 		users = new ArrayList<User>();
 
 		// find host address
@@ -98,7 +98,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout, ControllerLayout.mameControllerLayout()});
+		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout, ControllerLayout.loadFromFile("MAME.cfg")});
 		controllerComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
