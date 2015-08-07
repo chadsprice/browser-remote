@@ -227,10 +227,14 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		remoteServer = new RemoteServer(websocketPort, this);
 		remoteServer.start();
 	}
+	
+	public ControllerLayout getControllerLayout() {
+		return controllerLayout;
+	}
 
 	public void startHttpServer() {
 		try {
-			new HttpServer(httpPort);
+			new HttpServer(this, httpPort);
 		} catch (IOException e) {
 			String errorMessage = "Failed to start HTTP server.";
 			if (e instanceof BindException) {

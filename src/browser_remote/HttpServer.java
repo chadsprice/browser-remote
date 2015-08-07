@@ -25,8 +25,11 @@ public class HttpServer extends NanoHTTPD {
 		}
 	}
 	
-	public HttpServer(int port) throws IOException {
+	private ControlPanel controlPanel;
+	
+	public HttpServer(ControlPanel controlPanel, int port) throws IOException {
 		super(port);
+		this.controlPanel = controlPanel;
 		start();
 	}
 	
@@ -34,35 +37,29 @@ public class HttpServer extends NanoHTTPD {
 	public Response serve(IHTTPSession session) {
 		String uri = session.getUri();
 		if (uri.equals("/")) {
-			InputStream stream = getResource("http_resources/snes_controller.html");
+			String ip = null;
+			String[] headers = {"remote-addr", "http-client-ip"};
+			for (String header : headers) {
+				if (session.getHeaders().containsKey(header)) {
+					ip = session.getHeaders().get(header);
+					break;
+				}
+			}
+			InputStream stream = WebpageGenerator.generatePage(controlPanel, ip);
+			return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, stream);
+			/*InputStream stream = getResource("http_resources/snes_controller.html");
 			if (stream != null) {
 				return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, stream);
 			} else {
 				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
-			}
-			/*FileInputStream fis;
-			try {
-				fis = new FileInputStream(new File("http_resources/snes_controller.html"));
-				return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, fis);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
 			}*/
 		} else if(uri.contains("svg_snes_controller.svg")) {
-			InputStream stream = getResource("http_resources/snes_controller.html");
+			InputStream stream = getResource("http_resources/snes_controller.svg");
 			if (stream != null) {
 				return new NanoHTTPD.Response(Status.OK, "image/svg+xml", stream);
 			} else {
 				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
 			}
-			/*FileInputStream fis;
-			try {
-				fis = new FileInputStream(new File("http_resources/snes_controller.svg"));
-				return new NanoHTTPD.Response(Status.OK, "image/svg+xml", fis);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
-			}*/
 		} else {
 			return new NanoHTTPD.Response(Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT, "Error 404, file not found.");
 		}

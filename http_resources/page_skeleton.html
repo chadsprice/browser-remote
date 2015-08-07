@@ -57,13 +57,13 @@
 		<img id='controller' src='svg_snes_controller.svg' />
 		<div id='status'>STATUS: <span>DISCONNECTED</span></div>
 		<div id='config'>CONFIGURE KEYS</div>
-		@BUTTON_DIVS@
+@BUTTON_DIVS@
 
 		<script type='text/javascript'>
 
 		/* button width, height, left, and top as a ratio of controller width */
 		var buttonPositions = {};
-		@BUTTON_POSITIONS@
+@BUTTON_POSITIONS@
 
 		/* resize the controller when the window is resized */
 		function resizeController(event) {
@@ -104,7 +104,7 @@
 
 		/* map from key code to button name */
 		var keyBindings = {
-			@KEY_BINDINGS@
+@KEY_BINDINGS@
 		};
 
 		/* connect to server websocket */
