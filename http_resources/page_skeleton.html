@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv='content-type' content='text/html; charset=UTF-8'>
+		<meta charset='utf-8'>
+
+		<title>Browser Remote</title>
+
+		<style>
+			body {
+				position: relative;
+				margin: 0;
+				text-align: center;
+				font-family: Arial, Helvetica, sans-serif;
+			}
+			#controller {
+				margin: auto;
+			}
+			.button {
+				position: absolute;
+			}
+			.button:hover {
+				background-color: rgba(255, 255, 255, 0.3);
+			}
+			.pressed {
+				outline: #DDDDDD solid thick;
+			}
+			#status, #config {
+				position: absolute;
+				top: 0;
+				padding: 1em;
+			}
+			#status {
+				left: 0;
+			}
+			#status span {
+				color: red;
+			}
+			#config {
+				right: 0;
+			}
+			.config-text {
+				display: none;
+			}
+			#config, .config-text {
+				background-color: #CCCCCC;
+				outline: #888888 solid thick;
+			}
+			#config:hover {
+				background-color: #EEEEEE;
+				outline: #AAAAAA solid thick;
+			}
+		</style>
+	</head>
+
+	<body>
+		<img id='controller' src='svg_snes_controller.svg' />
+		<div id='status'>STATUS: <span>DISCONNECTED</span></div>
+		<div id='config'>CONFIGURE KEYS</div>
+		@BUTTON_DIVS@
+
+		<script type='text/javascript'>
+
+		/* button width, height, left, and top as a ratio of controller width */
+		var buttonPositions = {};
+		@BUTTON_POSITIONS@
+
+		/* resize the controller when the window is resized */
+		function resizeController(event) {
+			/* resize controller image */
+			var controller = document.getElementById('controller');
+			controller.removeAttribute('height');
+			controller.setAttribute('width', '80%');
+			if (controller.offsetHeight > window.innerHeight) {
+				controller.removeAttribute('width');
+				controller.setAttribute('height', window.innerHeight + 'px');
+			}
+			var controllerWidth = controller.offsetWidth;
+			var controllerLeft = (document.body.clientWidth - controllerWidth) / 2;
+			/* resize buttons */
+			var buttonDivs = document.getElementsByClassName('button');
+			for (var i = 0; i < buttonDivs.length; i++) {
+				var buttonDiv = buttonDivs[i];
+				var buttonPosition = buttonPositions[buttonDiv.getAttribute('name')];
+				buttonDiv.style.width = (controller.offsetWidth * buttonPosition[0]) + 'px';
+				buttonDiv.style.height = (controller.offsetWidth * buttonPosition[1]) + 'px';
+				buttonDiv.style.left = controllerLeft + (controller.offsetWidth * buttonPosition[2]) + 'px';
+				buttonDiv.style.top = (controller.offsetWidth * buttonPosition[3]) + 'px';
+			}
+		}
+		/* set the initial controller size when the page loads */
+		window.onload = resizeController;
+		/* window resize trigger */
+		window.addEventListener('resize', resizeController);
+
+		/* list of all button names */
+		var buttons = [@BUTTONS@];
+
+		/* map from button name to boolean indicating whether or not it is pressed */
+		var isPressed = {};
+		for (var i = 0; i < buttons.length; i++) {
+			isPressed[buttons[i]] = false;
+		}
+
+		/* map from key code to button name */
+		var keyBindings = {
+			@KEY_BINDINGS@
+		};
+
+		/* connect to server websocket */
+		var host = location.host;
+		if (host === '') {
+			host = 'localhost';
+		}
+		host = host.split(':')[0];
+		var socket = new WebSocket('ws://' + host + ':8081');
+		socket.onopen = function() {
+			document.getElementById("status").innerHTML = "STATUS: CONNECTED";
+		};
+		socket.onclose = function() {
+			document.getElementById("status").innerHTML = "STATUS: <span>DISCONNECTED</span>";
+		};
+
+		/* button configuration state */
+		var configuring = false;
+		var buttonConfiguring = null;
+		var buttonConfiguringText = null;
+
+		/* handle keyboard input */
+		document.onkeydown = function(event) {
+			if (configuring) {
+				if (buttonConfiguring) {
+					var name = buttonConfiguring.getAttribute('name');
+					for (key in keyBindings) {
+						if (keyBindings.hasOwnProperty(key) && keyBindings[key] === name) {
+							delete keyBindings[key];
+							break;
+						}
+					}
+					if (keyBindings[event.keyCode]) {
+						document.getElementById(keyBindings[event.keyCode] + '_button').children[0].innerHTML = '';
+					}
+					keyBindings[event.keyCode] = name;
+					var keyName = event.key;
+					if (keyName === ' ') {
+						keyName = 'space';
+					} else if (keyName === 'ArrowUp') {
+						keyName = 'up';
+					} else if (keyName === 'ArrowDown') {
+						keyName = 'down';
+					} else if (keyName === 'ArrowLeft') {
+						keyName = 'left';
+					} else if (keyName === 'ArrowRight') {
+						keyName = 'right';
+					}
+					buttonConfiguring.children[0].innerHTML = keyName.toUpperCase();
+					buttonConfiguring = null;
+					buttonConfiguringText = null;
+				}
+			} else {
+				var button = keyBindings[event.keyCode];
+				if (button) {
+					if (!isPressed[button]) {
+						isPressed[button] = true;
+						socket.send(button + ' down');
+						document.getElementById(button + '_button').className = 'button pressed';
+					}
+				}
+			}
+		}
+		document.onkeyup = function(event) {
+			var button = keyBindings[event.keyCode];
+			if (button) {
+				if (isPressed[button]) {
+					isPressed[button] = false;
+					socket.send(button + ' up');
+					document.getElementById(button + '_button').className = 'button';
+				}
+			}
+		}
+
+		/* handle mouse and touch input */
+		Array.prototype.filter.call(document.getElementsByClassName('button'), function(buttonDiv) {
+			function handleStart(event) {
+				event.preventDefault();
+				var button = buttonDiv.getAttribute('name');
+				if (configuring) {
+					if (buttonConfiguring && buttonConfiguringText) {
+						buttonConfiguring.children[0].innerHTML = buttonConfiguringText;
+					}
+					buttonConfiguring = buttonDiv;
+					buttonConfiguringText = buttonDiv.children[0].innerHTML;
+					buttonDiv.children[0].innerHTML = '[PRESS KEY]';
+				} else if (!isPressed[button]) {
+					isPressed[button] = true;
+					socket.send(button + ' down');
+					buttonDiv.className = 'button pressed';
+				}
+			}
+			function handleEnd(event) {
+				event.preventDefault();
+				var button = buttonDiv.getAttribute('name');
+				if (isPressed[button]) {
+					isPressed[button] = false;
+					socket.send(button + ' up');
+					buttonDiv.className = 'button';
+				}
+			}
+			buttonDiv.addEventListener('touchstart', handleStart, false);
+			buttonDiv.addEventListener('touchend', handleEnd, false);
+			buttonDiv.addEventListener('touchleave', handleEnd, false);
+			buttonDiv.addEventListener('touchcancel', handleEnd, false);
+			buttonDiv.onmousedown = handleStart;
+			buttonDiv.onmouseup = handleEnd;
+			buttonDiv.onmouseleave = handleEnd;
+		});
+
+		/* handle configure button */
+		var config = document.getElementById('config');
+		config.onclick = function(event) {
+			var display;
+			if (!configuring) {
+				config.innerHTML = 'DONE';
+				display = 'block';
+			} else {
+				if (buttonConfiguring && buttonConfiguringText) {
+					buttonConfiguring.children[0].innerHTML = buttonConfiguringText;
+				}
+				config.innerHTML = 'CONFIGURE KEYS';
+				display = 'none';
+			}
+			Array.prototype.filter.call(document.getElementsByClassName('config-text'), function (configText) {
+				configText.style.display = display;
+			});
+			configuring = !configuring;
+		};
+
+		/* prevent clicking from selecting the controller as an image */
+		document.getElementById("controller").onclick = function(event) {
+    	event.preventDefault();
+		};
+		/* prevent dragging from dragging the controller as an image */
+		document.getElementById("controller").ondragstart = function(event) {
+    	event.preventDefault();
+		};
+
+		</script>
+	</body>
+</html>
