@@ -31,7 +31,7 @@ public class ConfigureControllerPanel extends JPanel {
 	}
 
 	private ControlPanel controlPanel;
-	private ConfigurableControllerLayout controllerLayout;
+	private ControllerLayout controllerLayout;
 	private int controllerNumber;
 
 	private JComboBox<Integer> controllerNumberComboBox;
@@ -44,7 +44,7 @@ public class ConfigureControllerPanel extends JPanel {
 	private JButton saveButton;
 	private JButton loadButton;
 
-	public ConfigureControllerPanel(ControlPanel controlPanel, ConfigurableControllerLayout controllerLayout) {
+	public ConfigureControllerPanel(ControlPanel controlPanel, ControllerLayout controllerLayout) {
 		this.controlPanel = controlPanel;
 		this.controllerLayout = controllerLayout;
 		controllerNumber = 1;
@@ -145,7 +145,7 @@ public class ConfigureControllerPanel extends JPanel {
 		add(bottomPanel);
 	}
 
-	public void setControllerLayout(ConfigurableControllerLayout controllerLayout) {
+	public void setControllerLayout(ControllerLayout controllerLayout) {
 		this.controllerLayout = controllerLayout;
 
 		controllerNumber = 1;
@@ -223,7 +223,7 @@ public class ConfigureControllerPanel extends JPanel {
 		if (name.endsWith(".cfg")) {
 			name = name.substring(0, name.length() - 4);
 		}
-		ConfigurableControllerLayout loadedLayout = new ConfigurableControllerLayout(name);
+		ControllerLayout loadedLayout = new ControllerLayout(name);
 		loadedLayout.addController();
 		while (scanner.hasNextLine()) {
 			String[] tokens = scanner.nextLine().split(" ");

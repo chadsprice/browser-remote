@@ -12,14 +12,14 @@ public class KeyTableModel extends AbstractTableModel {
 
 	private static final String[] columnNames = {"Button", "Key", "", ""};
 
-	private ConfigurableControllerLayout controllerLayout;
+	private ControllerLayout controllerLayout;
 	private int controllerNumber;
 	private List<Object[]> data;
 
 	private JLabel keyLabelConfiguring;
 	private String buttonConfiguring;
 
-	public KeyTableModel(final ConfigureControllerPanel configureControllerPanel, ConfigurableControllerLayout controllerLayout) {
+	public KeyTableModel(final ConfigureControllerPanel configureControllerPanel, ControllerLayout controllerLayout) {
 		this.controllerLayout = controllerLayout;
 		controllerNumber = 1;
 		data = new ArrayList<Object[]>();

@@ -34,7 +34,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	private RemoteServer remoteServer;
 	private Set<String> banned;
 
-	private ConfigurableControllerLayout controllerLayout;
+	private ControllerLayout controllerLayout;
 	private boolean serverRunning;
 	private boolean windowFocused;
 	private boolean configuringController;
@@ -42,7 +42,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 	private List<User> users;
 	private boolean userTableShown;
 
-	private JComboBox<ConfigurableControllerLayout> controllerComboBox;
+	private JComboBox<ControllerLayout> controllerComboBox;
 	private JButton controllerConfigureButton;
 	private JButton startButton;
 	private JLabel serverStateLabel;
@@ -68,7 +68,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 			System.exit(-1);
 		}
 		banned = new HashSet<String>();
-		controllerLayout = ConfigurableControllerLayout.zsnesControllerLayout();
+		controllerLayout = ControllerLayout.zsnesControllerLayout();
 		users = new ArrayList<User>();
 
 		// find host address
@@ -98,14 +98,14 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		}
 
 		// create ui elements
-		controllerComboBox = new JComboBox<ConfigurableControllerLayout>(new ConfigurableControllerLayout[] {controllerLayout, ConfigurableControllerLayout.mameControllerLayout()});
+		controllerComboBox = new JComboBox<ControllerLayout>(new ControllerLayout[] {controllerLayout, ControllerLayout.mameControllerLayout()});
 		controllerComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				for (User user : users) {
 					releaseAllButtons(user);
 				}
-				controllerLayout = (ConfigurableControllerLayout) controllerComboBox.getSelectedItem();
+				controllerLayout = (ControllerLayout) controllerComboBox.getSelectedItem();
 				configureControllerPanel.setControllerLayout(controllerLayout);
 			}
 		});
@@ -261,7 +261,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		updateServerStateLabel();
 	}
 
-	public void loadedNewControllerLayout(ConfigurableControllerLayout controllerLayout) {
+	public void loadedNewControllerLayout(ControllerLayout controllerLayout) {
 		controllerComboBox.addItem(controllerLayout);
 		controllerComboBox.setSelectedItem(controllerLayout);
 		configureControllerPanel.setControllerLayout(controllerLayout);
