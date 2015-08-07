@@ -113,7 +113,7 @@
 			host = 'localhost';
 		}
 		host = host.split(':')[0];
-		var socket = new WebSocket('ws://' + host + ':8081');
+		var socket = new WebSocket('ws://' + host + ':@WEBSOCKET_PORT@');
 		socket.onopen = function() {
 			document.getElementById("status").innerHTML = "STATUS: CONNECTED";
 		};

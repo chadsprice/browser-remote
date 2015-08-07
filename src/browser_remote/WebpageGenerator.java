@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -86,6 +85,7 @@ public class WebpageGenerator {
 		replace(page, "@BUTTON_POSITIONS@", generateButtonPositions(controllerLayout));
 		replace(page, "@BUTTONS@", generateButtons(controllerLayout));
 		replace(page, "@KEY_BINDINGS@", generateKeyBindings(controllerLayout, ip));
+		replace(page, "@WEBSOCKET_PORT@", controlPanel.getWebsocketPort() + "");
 		return new ByteArrayInputStream(page.toString().getBytes(StandardCharsets.UTF_8));
 	}
 	
@@ -115,19 +115,21 @@ public class WebpageGenerator {
 	
 	private static String generateButtons(ControllerLayout controllerLayout) {
 		StringBuilder buttonStr = new StringBuilder();
-		List<String> buttons = controllerLayout.getButtons();
-		for (int i = 0; i > buttons.size(); i++) {
-			buttonStr.append(String.format(i == buttons.size() - 1 ? "'%s'" : "'%s',", buttons.get(i)));
+		String delimiter = "";
+		for (String button : controllerLayout.getButtons()) {
+			buttonStr.append(String.format(delimiter + "'%s'", button));
+			delimiter = ", ";
 		}
 		return buttonStr.toString();
 	}
 	
 	private static String generateKeyBindings(ControllerLayout controllerLayout, String ip) {
 		StringBuilder keyBindings = new StringBuilder();
-		List<String> buttons = controllerLayout.getButtons();
-		for (int i = 0; i > buttons.size(); i++) {
-			int keyCode = controllerLayout.getBrowserKeyCode(buttons.get(i), ip);
-			keyBindings.append(String.format(i == buttons.size() - 1 ? "%d, '%s'" : "%d, '%s',", keyCode, buttons.get(i)));
+		String delimiter = "";
+		for (String button : controllerLayout.getButtons()) {
+			int keyCode = controllerLayout.getBrowserKeyCode(button, ip);
+			keyBindings.append(String.format(delimiter + "%d : '%s'", keyCode, button));
+			delimiter = ",\n";
 		}
 		return keyBindings.toString();
 	}

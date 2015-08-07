@@ -218,6 +218,10 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 			public void windowActivated(WindowEvent e) {}
 		});
 	}
+	
+	public int getWebsocketPort() {
+		return websocketPort;
+	}
 
 	public boolean isRunning() {
 		return serverRunning && !windowFocused && !configuringController;

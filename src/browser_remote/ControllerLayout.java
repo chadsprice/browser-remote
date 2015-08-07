@@ -82,6 +82,18 @@ public class ControllerLayout {
 	public void setKey(int controllerNumber, String button, int key) {
 		keyMaps.get(controllerNumber - 1).put(button, key);
 	}
+	
+	public void setButtonPosition(String button, Rectangle2D.Double position) {
+		buttonPositions.put(button, position);
+	}
+	
+	public int getDefaultBrowserKeyCode(String button) {
+		return defaultBrowserKeyCodes.get(button);
+	}
+	
+	public void setDefaultBrowserKeyCode(String button, int keyCode) {
+		defaultBrowserKeyCodes.put(button, keyCode);
+	}
 
 	@Override
 	public String toString() {

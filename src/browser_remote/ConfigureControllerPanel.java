@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -228,8 +229,20 @@ public class ConfigureControllerPanel extends JPanel {
 		while (scanner.hasNextLine()) {
 			String[] tokens = scanner.nextLine().split(" ");
 			if (tokens[0].equals("button")) {
-				if (tokens.length == 2) {
-					loadedLayout.addButton(tokens[1]);
+				if (tokens.length == 7) {
+					String button = tokens[1];
+					loadedLayout.addButton(button);
+					try {
+						double width = Double.parseDouble(tokens[2]);
+						double height = Double.parseDouble(tokens[3]);
+						double left = Double.parseDouble(tokens[4]);
+						double top = Double.parseDouble(tokens[5]);
+						loadedLayout.setButtonPosition(button, new Rectangle2D.Double(width, height, left, top));
+						int keyCode = Integer.parseInt(tokens[6]);
+						loadedLayout.setDefaultBrowserKeyCode(button, keyCode);
+					} catch (NumberFormatException e) {
+						// TODO
+					}
 				}
 			} else if (tokens[0].equals("map")) {
 				if (tokens.length == 3) {
@@ -237,7 +250,7 @@ public class ConfigureControllerPanel extends JPanel {
 						int key = Integer.parseInt(tokens[2]);
 						loadedLayout.setKey(loadedLayout.getNumberOfControllers(), tokens[1], key);
 					} catch (NumberFormatException e) {
-						// TODO display helpful error message
+						// TODO
 					}
 				}
 			} else if (tokens[0].equals("new_controller")) {
@@ -264,7 +277,9 @@ public class ConfigureControllerPanel extends JPanel {
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			for (String button : controllerLayout.getButtons()) {
-				writer.write(String.format("button %s\n", button));
+				Rectangle2D.Double position = controllerLayout.getButtonPosition(button);
+				int keyCode = controllerLayout.getDefaultBrowserKeyCode(button);
+				writer.write(String.format("button %s %f %f %f %f %d \n", button, position.width, position.height, position.x, position.y, keyCode));
 			}
 			for (int i = 0; i < controllerLayout.getNumberOfControllers(); i++) {
 				for (String button : controllerLayout.getButtons()) {
