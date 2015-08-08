@@ -62,7 +62,7 @@ public class ControllerLayout {
 						double height = Double.parseDouble(tokens[3]);
 						double left = Double.parseDouble(tokens[4]);
 						double top = Double.parseDouble(tokens[5]);
-						loadedLayout.setButtonPosition(button, new Rectangle2D.Double(width, height, left, top));
+						loadedLayout.setButtonPosition(button, new Rectangle2D.Double(left, top, width, height));
 						int keyCode = Integer.parseInt(tokens[6]);
 						loadedLayout.setDefaultBrowserKeyCode(button, keyCode);
 					} catch (NumberFormatException e) {

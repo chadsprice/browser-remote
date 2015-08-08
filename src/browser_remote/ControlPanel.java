@@ -463,6 +463,7 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 		for (int i = 0; i < userTableModel.getRowCount(); i++) {
 			if (user.ip.equals((String) userTableModel.getValueAt(i, 0))) {
 				userTableModel.removeRow(i);
+				updateUsersConnectedLabel();
 				break;
 			}
 		}
