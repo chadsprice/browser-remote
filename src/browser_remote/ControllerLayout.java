@@ -124,6 +124,18 @@ public class ControllerLayout {
 		}
 	}
 	
+	public void setDefaultBrowserKeyCode(String button, int keyCode) {
+		defaultBrowserKeyCodes.put(button, keyCode);
+	}
+	
+	public int getDefaultBrowserKeyCode(String button) {
+		return defaultBrowserKeyCodes.get(button);
+	}
+	
+	public void setIpBrowserKeyCodes(String ip, Map<String, Integer> keyCodes) {
+		ipBrowserKeyCodes.put(ip, keyCodes);
+	}
+	
 	public int getBrowserKeyCode(String button, String ip) {
 		if (ipBrowserKeyCodes.containsKey(ip)) {
 			Integer keyCode = ipBrowserKeyCodes.get(ip).get(button);
@@ -170,14 +182,6 @@ public class ControllerLayout {
 	
 	public void setButtonPosition(String button, Rectangle2D.Double position) {
 		buttonPositions.put(button, position);
-	}
-	
-	public int getDefaultBrowserKeyCode(String button) {
-		return defaultBrowserKeyCodes.get(button);
-	}
-	
-	public void setDefaultBrowserKeyCode(String button, int keyCode) {
-		defaultBrowserKeyCodes.put(button, keyCode);
 	}
 	
 	public String getImageFilename() {

@@ -162,7 +162,7 @@
 				if (button) {
 					if (!isPressed[button]) {
 						isPressed[button] = true;
-						socket.send(button + ' down');
+						socket.send('down ' + button);
 						document.getElementById(button + '_button').className = 'button pressed';
 					}
 				}
@@ -173,7 +173,7 @@
 			if (button) {
 				if (isPressed[button]) {
 					isPressed[button] = false;
-					socket.send(button + ' up');
+					socket.send('up ' + button);
 					document.getElementById(button + '_button').className = 'button';
 				}
 			}
@@ -193,7 +193,7 @@
 					buttonDiv.children[0].innerHTML = '[PRESS KEY]';
 				} else if (!isPressed[button]) {
 					isPressed[button] = true;
-					socket.send(button + ' down');
+					socket.send('down ' + button);
 					buttonDiv.className = 'button pressed';
 				}
 			}
@@ -202,7 +202,7 @@
 				var button = buttonDiv.getAttribute('name');
 				if (isPressed[button]) {
 					isPressed[button] = false;
-					socket.send(button + ' up');
+					socket.send('up ' + button);
 					buttonDiv.className = 'button';
 				}
 			}
@@ -228,6 +228,14 @@
 				}
 				config.innerHTML = 'CONFIGURE KEYS';
 				display = 'none';
+				/* send the newly configured key codes to the server */
+				var keyCodes = "set_keycodes";
+				for (var keyCode in keyBindings) {
+					if (keyBindings.hasOwnProperty(keyCode)) {
+						keyCodes += " " + keyBindings[keyCode] + " " + keyCode;
+					}
+				}
+				socket.send(keyCodes);
 			}
 			Array.prototype.filter.call(document.getElementsByClassName('config-text'), function (configText) {
 				configText.style.display = display;

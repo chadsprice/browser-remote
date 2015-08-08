@@ -455,6 +455,11 @@ public class ControlPanel extends JPanel implements WindowFocusListener {
 			}
 		}
 	}
+	
+	public void remoteSetKeyCodes(WebSocket conn, Map<String, Integer> keyCodes) {
+		String ip = conn.getRemoteSocketAddress().getAddress().getHostAddress();
+		controllerLayout.setIpBrowserKeyCodes(ip, keyCodes);
+	}
 
 	private void removeUser(User user) {
 		releaseAllButtons(user);

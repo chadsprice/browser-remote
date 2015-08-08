@@ -1,6 +1,8 @@
 package browser_remote;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -31,15 +33,25 @@ public class RemoteServer extends WebSocketServer {
 
 	@Override
 	public void onMessage(WebSocket conn, String message) {
-		if (!controlPanel.isRunning()) {
-			return;
-		}
 		String[] tokens = message.split(" ");
-		if (tokens.length != 2)
-			return;
-		if (tokens[1].equals("down") || tokens[1].equals("up")) {
+		if (controlPanel.isRunning() && tokens.length == 2 && 
+				(tokens[0].equals("down") || tokens[0].equals("up"))) {
 			synchronized (controlPanel) {
-				controlPanel.remoteButton(conn, tokens[0], tokens[1].equals("down"));
+				controlPanel.remoteButton(conn, tokens[1], tokens[0].equals("down"));
+			}
+		} else if (tokens.length % 2 == 1 &&
+				tokens[0].equals("set_keycodes")) {
+			Map<String, Integer> keyCodes = new HashMap<String, Integer>();
+			for (int i = 1; i + 1 < tokens.length; i++) {
+				try {
+					int keyCode = Integer.parseInt(tokens[i + 1]);
+					keyCodes.put(tokens[i], keyCode);
+				} catch (NumberFormatException e) {
+					// ignore bad input
+				}
+			}
+			synchronized (controlPanel) {
+				controlPanel.remoteSetKeyCodes(conn, keyCodes);
 			}
 		}
 	}
