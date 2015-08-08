@@ -6,10 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.Rectangle2D;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import javax.swing.*;
@@ -232,21 +229,7 @@ public class ConfigureControllerPanel extends JPanel {
 	
 	private void saveConfiguration(File file) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-			for (String button : controllerLayout.getButtons()) {
-				Rectangle2D.Double position = controllerLayout.getButtonPosition(button);
-				int keyCode = controllerLayout.getDefaultBrowserKeyCode(button);
-				writer.write(String.format("button %s %f %f %f %f %d \n", button, position.width, position.height, position.x, position.y, keyCode));
-			}
-			for (int i = 0; i < controllerLayout.getNumberOfControllers(); i++) {
-				for (String button : controllerLayout.getButtons()) {
-					writer.write(String.format("map %s %d\n", button, controllerLayout.getKey(button, i + 1)));
-				}
-				if (i != controllerLayout.getNumberOfControllers() - 1) {
-					writer.write("new_controller\n");
-				}
-			}
-			writer.close();
+			controllerLayout.saveToFile(file);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog((JFrame) getTopLevelAncestor(), "Failed to write file.", "Save Error", JOptionPane.ERROR_MESSAGE);
 			return;

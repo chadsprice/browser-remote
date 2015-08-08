@@ -36,6 +36,7 @@ public class HttpServer extends NanoHTTPD {
 	@Override
 	public Response serve(IHTTPSession session) {
 		String uri = session.getUri();
+		String imageFilename = controlPanel.getControllerLayout().getImageFilename();
 		if (uri.equals("/")) {
 			String ip = null;
 			String[] headers = {"remote-addr", "http-client-ip"};
@@ -47,10 +48,11 @@ public class HttpServer extends NanoHTTPD {
 			}
 			InputStream stream = WebpageGenerator.generatePage(controlPanel, ip);
 			return new NanoHTTPD.Response(Status.OK, NanoHTTPD.MIME_HTML, stream);
-		} else if(uri.contains("svg_snes_controller.svg")) {
-			InputStream stream = getResource("http_resources/snes_controller.svg");
+		} else if(imageFilename != null && uri.contains(imageFilename)) {
+			InputStream stream = getResource(imageFilename);
 			if (stream != null) {
-				return new NanoHTTPD.Response(Status.OK, "image/svg+xml", stream);
+				String mimeType = imageFilename.endsWith(".svg") ? "image/svg+xml" : "image";
+				return new NanoHTTPD.Response(Status.OK, mimeType, stream);
 			} else {
 				return new NanoHTTPD.Response(Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "Error 500, internal server error.");
 			}

@@ -81,6 +81,7 @@ public class WebpageGenerator {
 		}
 		StringBuilder page = new StringBuilder(PAGE_SKELETON);
 		ControllerLayout controllerLayout = controlPanel.getControllerLayout();
+		replace(page, "@IMAGE_SOURCE@", generateImageSource(controllerLayout));
 		replace(page, "@BUTTON_DIVS@", generateButtonDivs(controllerLayout, ip));
 		replace(page, "@BUTTON_POSITIONS@", generateButtonPositions(controllerLayout));
 		replace(page, "@BUTTONS@", generateButtons(controllerLayout));
@@ -92,6 +93,14 @@ public class WebpageGenerator {
 	private static void replace(StringBuilder string, String target, String replacement) {
 		int startIndex = string.indexOf(target);
 		string.replace(startIndex, startIndex + target.length(), replacement);
+	}
+	
+	private static String generateImageSource(ControllerLayout controllerLayout) {
+		if (controllerLayout.getImageFilename() != null) {
+			return String.format("src='%s'", controllerLayout.getImageFilename());
+		} else {
+			return "";
+		}
 	}
 	
 	private static String generateButtonDivs(ControllerLayout controllerLayout, String ip) {

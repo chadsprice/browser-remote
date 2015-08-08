@@ -1,8 +1,11 @@
 package browser_remote;
 
 import java.awt.geom.Rectangle2D;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class ControllerLayout {
@@ -10,9 +13,11 @@ public class ControllerLayout {
 	private String name;
 	private List<String> buttons;
 	private List<Map<String, Integer>> keyMaps;
+	
 	private Map<String, Rectangle2D.Double> buttonPositions;
 	private Map<String, Integer> defaultBrowserKeyCodes;
 	private Map<String, Map<String, Integer>> ipBrowserKeyCodes;
+	private String imageFilename;
 
 	public ControllerLayout(String name) {
 		this.name = name;
@@ -41,7 +46,13 @@ public class ControllerLayout {
 		ControllerLayout loadedLayout = new ControllerLayout(name);
 		loadedLayout.addController();
 		while (scanner.hasNextLine()) {
-			String[] tokens = scanner.nextLine().split(" ");
+			String line = scanner.nextLine();
+			if (line.startsWith("image ")) {
+				String imageFilename = line.substring("image ".length());
+				loadedLayout.setImageFilename(imageFilename);
+				continue;
+			}
+			String[] tokens = line.split(" ");
 			if (tokens[0].equals("button")) {
 				if (tokens.length == 7) {
 					String button = tokens[1];
@@ -73,6 +84,27 @@ public class ControllerLayout {
 		}
 		scanner.close();
 		return loadedLayout;
+	}
+	
+	public void saveToFile(File file) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+		if (imageFilename != null) {
+			writer.write(String.format("image %s\n", imageFilename));
+		}
+		for (String button : buttons) {
+			Rectangle2D.Double position = buttonPositions.get(button);
+			int keyCode = defaultBrowserKeyCodes.get(button);
+			writer.write(String.format("button %s %f %f %f %f %d\n", button, position.width, position.height, position.x, position.y, keyCode));
+		}
+		for (int i = 0; i < getNumberOfControllers(); i++) {
+			for (String button : buttons) {
+				writer.write(String.format("map %s %d\n", button, getKey(button, i + 1)));
+			}
+			if (i != getNumberOfControllers() - 1) {
+				writer.write("new_controller\n");
+			}
+		}
+		writer.close();
 	}
 
 	public List<String> getButtons() {
@@ -146,6 +178,14 @@ public class ControllerLayout {
 	
 	public void setDefaultBrowserKeyCode(String button, int keyCode) {
 		defaultBrowserKeyCodes.put(button, keyCode);
+	}
+	
+	public String getImageFilename() {
+		return imageFilename;
+	}
+	
+	public void setImageFilename(String imageFilename) {
+		this.imageFilename = imageFilename;
 	}
 
 	@Override
