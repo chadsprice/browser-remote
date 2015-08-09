@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class WebpageGenerator {
-	
+
 	private static final Map<Integer, String> keyCodeNames;
 	static {
 		keyCodeNames = new HashMap<Integer, String>();
@@ -41,7 +41,7 @@ public class WebpageGenerator {
 		keyCodeNames.put(33, "PAGE UP");
 		keyCodeNames.put(34, "PAGE DOWN");
 		for (int i = 0; i < 12; i++) {
-			keyCodeNames.put(48 + i, "F" + (i + 1));
+			keyCodeNames.put(112 + i, "F" + (i + 1));
 		}
 	}
 	private static String keyCodeNameOf(int keyCode) {
@@ -53,9 +53,9 @@ public class WebpageGenerator {
 			return String.format("[%d]", keyCode);
 		}
 	}
-	
+
 	private static String PAGE_SKELETON;
-	
+
 	private static String loadResourceAsString(String filename) {
 		filename = "http_resources/" + filename;
 		InputStream stream = HttpServer.getResource(filename);
@@ -70,11 +70,11 @@ public class WebpageGenerator {
 		}
 		return str;
 	}
-	
+
 	private static void loadResources() {
 		PAGE_SKELETON = loadResourceAsString("page_skeleton.html");
 	}
-	
+
 	public static InputStream generatePage(ControlPanel controlPanel, String ip) {
 		if (PAGE_SKELETON == null) {
 			loadResources();
@@ -89,12 +89,12 @@ public class WebpageGenerator {
 		replace(page, "@WEBSOCKET_PORT@", controlPanel.getWebsocketPort() + "");
 		return new ByteArrayInputStream(page.toString().getBytes(StandardCharsets.UTF_8));
 	}
-	
+
 	private static void replace(StringBuilder string, String target, String replacement) {
 		int startIndex = string.indexOf(target);
 		string.replace(startIndex, startIndex + target.length(), replacement);
 	}
-	
+
 	private static String generateImageSource(ControllerLayout controllerLayout) {
 		if (controllerLayout.getImageFilename() != null) {
 			return String.format("src='%s'", controllerLayout.getImageFilename());
@@ -102,7 +102,7 @@ public class WebpageGenerator {
 			return "";
 		}
 	}
-	
+
 	private static String generateButtonDivs(ControllerLayout controllerLayout, String ip) {
 		StringBuilder buttonDivs = new StringBuilder();
 		for (String button : controllerLayout.getButtons()) {
@@ -112,7 +112,7 @@ public class WebpageGenerator {
 		}
 		return buttonDivs.toString();
 	}
-	
+
 	private static String generateButtonPositions(ControllerLayout controllerLayout) {
 		StringBuilder buttonPositions = new StringBuilder();
 		for (String button : controllerLayout.getButtons()) {
@@ -121,7 +121,7 @@ public class WebpageGenerator {
 		}
 		return buttonPositions.toString();
 	}
-	
+
 	private static String generateButtons(ControllerLayout controllerLayout) {
 		StringBuilder buttonStr = new StringBuilder();
 		String delimiter = "";
@@ -131,19 +131,21 @@ public class WebpageGenerator {
 		}
 		return buttonStr.toString();
 	}
-	
+
 	private static String generateKeyBindings(ControllerLayout controllerLayout, String ip) {
 		StringBuilder keyBindings = new StringBuilder();
 		String delimiter = "";
 		for (String button : controllerLayout.getButtons()) {
 			int keyCode = controllerLayout.getBrowserKeyCode(button, ip);
-			keyBindings.append(String.format(delimiter + "%d : '%s'", keyCode, button));
-			delimiter = ",\n";
+			if (keyCode != -1) {
+				keyBindings.append(String.format(delimiter + "%d : '%s'", keyCode, button));
+				delimiter = ",\n";
+			}
 		}
 		return keyBindings.toString();
 	}
-	
+
 	// prevent instantiation
 	private WebpageGenerator() {};
-	
+
 }
