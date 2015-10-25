@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class ControllerLayout {
@@ -29,21 +30,29 @@ public class ControllerLayout {
 	}
 	
 	public static ControllerLayout loadFromFile(String filename) {
-		return loadFromFile(new File(filename));
+		InputStream inputStream = HttpServer.getResource(filename);
+		if (inputStream == null) {
+			throw new IllegalArgumentException("File not found: " + filename);
+		}
+		Scanner scanner = new Scanner(inputStream);
+		return loadFromFile(filename, scanner);
 	}
 	
 	public static ControllerLayout loadFromFile(File file) {
-		Scanner scanner = null;
+		Scanner scanner;
 		try {
 			scanner = new Scanner(file);
 		} catch (FileNotFoundException e) {
-			return null;
+			throw new IllegalArgumentException("File not found: " + file.getName());
 		}
-		String name = file.getName();
-		if (name.endsWith(".cfg")) {
-			name = name.substring(0, name.length() - 4);
+		return loadFromFile(file.getName(), scanner);
+	}
+	
+	public static ControllerLayout loadFromFile(String filename, Scanner scanner) {
+		if (filename.endsWith(".cfg")) {
+			filename = filename.substring(0, filename.length() - 4);
 		}
-		ControllerLayout loadedLayout = new ControllerLayout(name);
+		ControllerLayout loadedLayout = new ControllerLayout(filename);
 		loadedLayout.addController();
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine();

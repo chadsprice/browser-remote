@@ -21,7 +21,7 @@ public class HttpServer extends NanoHTTPD {
 			return new FileInputStream(new File(filename));
 		} catch (FileNotFoundException e) {
 			// try to get resource from .jar file, returns null if not found
-			return HttpServer.class.getResourceAsStream(filename);
+			return HttpServer.class.getResourceAsStream("/" + filename);
 		}
 	}
 	
