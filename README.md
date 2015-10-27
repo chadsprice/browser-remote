@@ -8,6 +8,7 @@ Run `make` in the project's root directory to build `browser-remote.jar`. All re
 
 ## License
 This software is released by Chad Price under a Modified BSD license.
+
 Included Binary Libraries:
 * [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd), released under a Modified BSD license
 * [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket), released under an MIT license
